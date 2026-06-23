@@ -53,7 +53,7 @@ async function apiRequest(endpoint, options = {}) {
     
     // Inject headers
     options.headers = options.headers || {};
-    if (state.token) {
+    if (state.token && !options.headers["Authorization"]) {
         options.headers["Authorization"] = `Bearer ${state.token}`;
     }
     
@@ -77,9 +77,25 @@ async function apiRequest(endpoint, options = {}) {
             return true;
         }
 
-        const data = await response.json();
+        let data = null;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                const text = await response.text();
+                throw new Error(text || "Invalid JSON response from server");
+            }
+        } else {
+            const text = await response.text();
+            if (!response.ok) {
+                throw new Error(text || `Request failed with status ${response.status}`);
+            }
+            return text;
+        }
+
         if (!response.ok) {
-            throw new Error(data.detail || "Something went wrong");
+            throw new Error((data && data.detail) || "Something went wrong");
         }
         return data;
     } catch (error) {
@@ -750,12 +766,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: { email, password }
             });
             if (data) {
-                // Fetch profile to get role
-                const profile = await fetch(`${API_BASE}/api/auth/me`, {
+                // Fetch profile to get role using apiRequest for robust error handling
+                const profile = await apiRequest("/api/auth/me", {
                     headers: { "Authorization": `Bearer ${data.access_token}` }
-                }).then(res => res.json());
+                });
                 
-                handleLoginSuccess(data.access_token, profile.role);
+                if (profile) {
+                    handleLoginSuccess(data.access_token, profile.role);
+                }
             }
         } catch (err) {}
     });
