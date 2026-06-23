@@ -2,15 +2,15 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "destination": "/api/index.py"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/frontend/assets/$1"
+      "source": "/assets/:path*",
+      "destination": "/frontend/assets/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/frontend/index.html"
     }
   ]
