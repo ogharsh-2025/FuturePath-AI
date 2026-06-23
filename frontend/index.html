@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Job Matcher & Roadmap Generator</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="main-header">
+        <div class="logo">
+            <i class="fa-solid fa-brain logo-icon"></i>
+            <span>FuturePath<span class="logo-accent">.AI</span></span>
+        </div>
+        <nav class="nav-links">
+            <a href="#home" id="nav-home" class="nav-link active">Home</a>
+            <a href="#dashboard" id="nav-dashboard" class="nav-link auth-required hidden">Dashboard</a>
+            <a href="#recruiter" id="nav-recruiter" class="nav-link auth-required hidden">Recruiter Portal</a>
+            <a href="#upload" id="nav-upload" class="nav-link auth-required hidden">Upload Resume</a>
+        </nav>
+        <div class="auth-buttons">
+            <button id="btn-login-nav" class="btn btn-outline">Login</button>
+            <button id="btn-logout-nav" class="btn btn-primary hidden">Logout</button>
+        </div>
+    </header>
+
+    <!-- Global Toast Alert Message Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <main class="content-container">
+
+        <!-- 1. HOME VIEW -->
+        <section id="view-home" class="spa-view active">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1>Match Your Resume with <span class="gradient-text">Semantic AI</span></h1>
+                    <p class="hero-lead">Upload your resume to instantly compare skills with top job descriptions using MiniLM embeddings, detect skill gaps, and generate automated roadmaps to land your dream role.</p>
+                    <div class="hero-cta-group">
+                        <button id="btn-get-started" class="btn btn-primary btn-large">Get Started <i class="fa-solid fa-arrow-right"></i></button>
+                        <button id="btn-view-demo-jobs" class="btn btn-secondary btn-large">Explore Sample Jobs</button>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="glass-card visual-card float-anim">
+                        <div class="card-header-visual">
+                            <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> 94% Match</span>
+                            <span class="visual-company">DeepMinded AI</span>
+                        </div>
+                        <h3>Machine Learning Specialist</h3>
+                        <div class="skill-tags">
+                            <span class="tag">Python</span>
+                            <span class="tag">PyTorch</span>
+                            <span class="tag">Docker</span>
+                            <span class="tag-missing">Kubernetes</span>
+                        </div>
+                        <div class="visual-divider"></div>
+                        <div class="visual-roadmap-preview">
+                            <div class="step active"><i class="fa-solid fa-circle"></i> Learn Kubernetes</div>
+                            <div class="step"><i class="fa-regular fa-circle"></i> Deploy Web API</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="features-grid">
+                <div class="glass-card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-compass"></i></div>
+                    <h3>Semantic Vector Search</h3>
+                    <p>Matches resumes and job descriptions based on semantic similarity models, rather than simple keyword matches.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <h3>Skill Gap Analysis</h3>
+                    <p>Detects the exact technical requirements you are missing for a targeted job posting instantly.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-road"></i></div>
+                    <h3>Roadmap Generation</h3>
+                    <p>Generates step-by-step learning structures, curation resources, and practical projects to cover your skill gaps.</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 2. AUTH VIEW -->
+        <section id="view-auth" class="spa-view">
+            <div class="auth-wrapper">
+                <div class="glass-card auth-card" id="login-card">
+                    <h2>Welcome Back</h2>
+                    <p class="auth-subtitle">Sign in to your FuturePath.AI account</p>
+                    
+                    <form id="form-login">
+                        <div class="form-group">
+                            <label for="login-email">Email Address</label>
+                            <input type="email" id="login-email" required placeholder="name@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                    </form>
+                    <p class="auth-toggle-text">Don't have an account? <a href="#" id="link-to-register">Register here</a></p>
+                </div>
+
+                <div class="glass-card auth-card hidden" id="register-card">
+                    <h2>Create Account</h2>
+                    <p class="auth-subtitle">Get started with AI-powered job matching</p>
+                    
+                    <form id="form-register">
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input type="text" id="register-name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input type="email" id="register-email" required placeholder="name@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-role">I am a...</label>
+                            <select id="register-role" class="form-control">
+                                <option value="job_seeker">Job Seeker (Looking for jobs)</option>
+                                <option value="recruiter">Recruiter (Posting jobs)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" required placeholder="Min 6 characters">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                    </form>
+                    <p class="auth-toggle-text">Already have an account? <a href="#" id="link-to-login">Login here</a></p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 3. JOB SEEKER DASHBOARD VIEW -->
+        <section id="view-dashboard" class="spa-view">
+            <div class="dashboard-grid">
+                
+                <!-- Left Sidebar: Resume Status & Skills -->
+                <aside class="dashboard-sidebar">
+                    <div class="glass-card profile-resume-card">
+                        <h3>My Resume Profile</h3>
+                        <div id="resume-status-container">
+                            <!-- Populated by JS -->
+                            <div class="no-resume-state">
+                                <div class="icon-warning"><i class="fa-solid fa-file-excel"></i></div>
+                                <p>No resume uploaded yet. Upload your PDF/DOCX to view matching jobs.</p>
+                                <button id="btn-dashboard-upload" class="btn btn-primary">Upload Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Right Section: Job Matches Grid -->
+                <div class="dashboard-main">
+                    <div class="section-header">
+                        <h2>Top Matches For You</h2>
+                        <span class="recommendations-badge" id="matches-count-badge">0 Results</span>
+                    </div>
+
+                    <div id="recommendations-container" class="recommendations-list">
+                        <!-- Populated by JS -->
+                        <div class="loading-state">
+                            <i class="fa-solid fa-circle-notch fa-spin spinner"></i>
+                            <p>Calculating matches using Semantic Similarity...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 4. RECRUITER PORTAL VIEW -->
+        <section id="view-recruiter" class="spa-view">
+            <div class="recruiter-grid">
+                <!-- Left Panel: Post/Edit Form -->
+                <div class="glass-card form-panel">
+                    <h3 id="recruiter-form-title">Post New Job Opening</h3>
+                    <form id="form-job-post">
+                        <input type="hidden" id="job-id-field">
+                        <div class="form-group">
+                            <label for="job-title">Job Title</label>
+                            <input type="text" id="job-title" required placeholder="e.g. Senior Software Engineer">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-company">Company</label>
+                            <input type="text" id="job-company" required placeholder="e.g. FuturePath Labs">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-location">Location</label>
+                            <input type="text" id="job-location" required placeholder="e.g. New York, NY (Remote)">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-salary">Salary Range</label>
+                            <input type="text" id="job-salary" placeholder="e.g. $130,000 - $160,000">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-description">Job Description & Requirements</label>
+                            <textarea id="job-description" required rows="6" placeholder="Describe the job description, required skills, and candidate profile. The AI will extract requirements automatically..."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="btn-submit-job" class="btn btn-primary">Post Opening</button>
+                            <button type="button" id="btn-cancel-job" class="btn btn-outline hidden">Cancel Edit</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Panel: Active Jobs List -->
+                <div class="jobs-list-panel">
+                    <div class="section-header">
+                        <h2>My Postings</h2>
+                    </div>
+                    <div id="recruiter-jobs-container" class="recruiter-jobs-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 5. UPLOAD RESUME VIEW -->
+        <section id="view-upload" class="spa-view">
+            <div class="upload-wrapper">
+                <div class="glass-card upload-card">
+                    <div class="upload-header">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <h2>Upload Resume</h2>
+                        <p>File formats supported: PDF, DOCX (Max size: 5MB)</p>
+                    </div>
+                    
+                    <!-- Drag and Drop Zone -->
+                    <div id="drop-zone" class="drop-zone">
+                        <p>Drag & drop your resume file here or</p>
+                        <label for="resume-file-input" class="btn btn-outline btn-upload-select">Select File</label>
+                        <input type="file" id="resume-file-input" class="hidden-input" accept=".pdf,.docx">
+                        <div id="selected-file-name" class="selected-file-name hidden"></div>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div id="upload-progress-container" class="upload-progress-container hidden">
+                        <div class="progress-bar-bg">
+                            <div id="upload-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <p id="upload-status-text">Uploading file...</p>
+                    </div>
+
+                    <button id="btn-process-resume" class="btn btn-primary btn-full btn-large" disabled>Process Resume with AI</button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 6. JOB DETAILS VIEW -->
+        <section id="view-job-details" class="spa-view">
+            <div class="back-link">
+                <a href="#dashboard" id="btn-back-to-dashboard"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+            </div>
+
+            <div class="job-details-layout">
+                <!-- Main details pane -->
+                <div class="glass-card job-details-main">
+                    <div class="job-detail-header">
+                        <div class="job-meta-main">
+                            <h1 id="details-job-title">Job Title</h1>
+                            <div class="job-meta-row">
+                                <span id="details-company"><i class="fa-solid fa-building"></i> Company</span>
+                                <span id="details-location"><i class="fa-solid fa-location-dot"></i> Location</span>
+                                <span id="details-salary"><i class="fa-solid fa-money-bill-wave"></i> Salary</span>
+                            </div>
+                        </div>
+                        <div class="job-match-badge-wrap">
+                            <div id="details-match-score-badge" class="details-match-score">0%</div>
+                            <span>Match Score</span>
+                        </div>
+                    </div>
+
+                    <div class="job-content-divider"></div>
+
+                    <div class="job-description-section">
+                        <h3>Role Description</h3>
+                        <p id="details-description" class="formatted-text">Description goes here...</p>
+                    </div>
+                </div>
+
+                <!-- Skill Gaps and Roadmap CTA Panel -->
+                <aside class="job-details-sidebar">
+                    <div class="glass-card skill-analysis-card">
+                        <h3>Match Analysis</h3>
+                        
+                        <div class="skill-category">
+                            <div class="category-header">
+                                <span>Matched Skills</span>
+                                <span class="badge badge-success-count" id="count-matched-skills">0</span>
+                            </div>
+                            <div class="skill-tags-group" id="container-matched-skills">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="skill-category">
+                            <div class="category-header">
+                                <span>Missing Skills</span>
+                                <span class="badge badge-warning-count" id="count-missing-skills">0</span>
+                            </div>
+                            <div class="skill-tags-group" id="container-missing-skills">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="roadmap-cta">
+                            <p>Generate a step-by-step career timeline and learning project modules to acquire missing technical competencies.</p>
+                            <button id="btn-generate-roadmap" class="btn btn-primary btn-full btn-large">Generate Learning Roadmap <i class="fa-solid fa-route"></i></button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+
+        <!-- 7. CAREER ROADMAP VIEW -->
+        <section id="view-roadmap" class="spa-view">
+            <div class="back-link">
+                <a href="#" id="btn-back-to-job"><i class="fa-solid fa-arrow-left"></i> Back to Job Details</a>
+            </div>
+
+            <div class="roadmap-header">
+                <h2>Roadmap to <span class="gradient-text" id="roadmap-job-title">Backend Developer</span></h2>
+                <p id="roadmap-subtitle">Custom learning path built for you to join tech teams at Apple</p>
+            </div>
+
+            <div class="roadmap-layout">
+                <!-- Timeline elements container -->
+                <div class="roadmap-timeline" id="roadmap-timeline-container">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <p>&copy; 2026 FuturePath.AI. Built with FastAPI, Sentence Transformers, and Vanilla JS.</p>
+    </footer>
+
+    <!-- Main JavaScript Logic -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
