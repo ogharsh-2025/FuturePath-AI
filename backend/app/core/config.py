@@ -15,5 +15,14 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+# Configure HuggingFace/SentenceTransformers cache paths for Vercel's read-only environment
+if os.environ.get("VERCEL"):
+    os.environ["HF_HOME"] = "/tmp/huggingface"
+    os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp/sentence_transformers"
+    settings.UPLOAD_DIR = "/tmp/uploads"
+
 # Ensure uploads directory exists
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+except Exception:
+    pass
