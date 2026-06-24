@@ -12,8 +12,17 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "ignore"
+        # Prioritize system environment variables over the .env file
+        env_file_encoding = 'utf-8'
 
 settings = Settings()
+
+# Force environment overrides if DATABASE_URL is in OS environment variables
+if "DATABASE_URL" in os.environ:
+    db_url = os.environ["DATABASE_URL"]
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    settings.DATABASE_URL = db_url
 
 # Configure HuggingFace/SentenceTransformers cache paths for Vercel's read-only environment
 if os.environ.get("VERCEL"):
