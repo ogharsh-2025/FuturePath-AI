@@ -80,7 +80,7 @@ else:
 @app.on_event("startup")
 def run_migrations():
     """
-    Runs programmatic database creation and Alembic migrations on startup.
+    Runs programmatic database creation on startup.
     Ensures database schema is fully established without blocking Render.
     """
     try:
@@ -88,14 +88,5 @@ def run_migrations():
         from backend.app.database.base import Base
         Base.metadata.create_all(bind=engine)
         print("[Database]: Tables created/verified successfully.")
-        
-        # Run Alembic migrations if any exist
-        from alembic.config import Config
-        from alembic import command
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        alembic_ini_path = os.path.abspath(os.path.join(current_dir, "..", "alembic.ini"))
-        alembic_cfg = Config(alembic_ini_path)
-        command.upgrade(alembic_cfg, "head")
-        print("[Database]: Migrations completed successfully.")
     except Exception as e:
         print(f"[Database Error]: Startup database setup failed: {str(e)}")
