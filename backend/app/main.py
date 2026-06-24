@@ -41,3 +41,18 @@ else:
             "message": "AI-Powered Job Recommendation Platform Backend is running. Frontend directory not found.",
             "docs_url": "/docs"
         }
+
+# Global exception handler for debugging 500 errors in deployment
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+            "traceback": traceback.format_exc()
+        }
+    )
