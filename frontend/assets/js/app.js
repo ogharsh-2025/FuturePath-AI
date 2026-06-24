@@ -9,9 +9,9 @@ const API_BASE = "";
 
 // Global State
 const state = {
-    token: localStorage.getItem("token") || null,
-    role: localStorage.getItem("role") || null, // job_seeker or recruiter
-    user: null,
+    token: "guest-token",
+    role: "recruiter", // allow access to both recruiter portal and candidate dashboard
+    user: { name: "Guest User", email: "guest@example.com" },
     currentJobId: null
 };
 
@@ -198,25 +198,15 @@ function checkRole(requiredRole) {
 
 // Update Nav Buttons based on logged in status
 function updateNavUI() {
-    const isLoggedIn = !!state.token;
+    // Hide login/logout buttons entirely in Guest mode
+    document.getElementById("btn-login-nav").classList.add("hidden");
+    document.getElementById("btn-logout-nav").classList.add("hidden");
     
-    // Toggle login/logout button
-    if (isLoggedIn) {
-        document.getElementById("btn-login-nav").classList.add("hidden");
-        document.getElementById("btn-logout-nav").classList.remove("hidden");
-        
-        // Show auth-only links depending on role
-        document.querySelectorAll(".auth-required").forEach(el => el.classList.remove("hidden"));
-        if (state.role === "recruiter") {
-            document.getElementById("nav-dashboard").classList.add("hidden");
-        } else {
-            document.getElementById("nav-recruiter").classList.add("hidden");
-        }
-    } else {
-        document.getElementById("btn-login-nav").classList.remove("hidden");
-        document.getElementById("btn-logout-nav").classList.add("hidden");
-        document.querySelectorAll(".auth-required").forEach(el => el.classList.add("hidden"));
-    }
+    // Always show all navigation links
+    document.querySelectorAll(".auth-required").forEach(el => el.classList.remove("hidden"));
+    document.getElementById("nav-dashboard").classList.remove("hidden");
+    document.getElementById("nav-recruiter").classList.remove("hidden");
+    document.getElementById("nav-upload").classList.remove("hidden");
 }
 
 // Toggle between Login and Register Cards in the Auth view
@@ -737,20 +727,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btn-logout-nav").addEventListener("click", handleLogout);
     
     document.getElementById("btn-get-started").addEventListener("click", () => {
-        if (state.token) {
-            window.location.hash = (state.role === "recruiter") ? "#recruiter" : "#dashboard";
-        } else {
-            window.location.hash = "#register";
-        }
+        window.location.hash = "#dashboard";
     });
     
     document.getElementById("btn-view-demo-jobs").addEventListener("click", () => {
-        if (state.token) {
-            window.location.hash = (state.role === "recruiter") ? "#recruiter" : "#dashboard";
-        } else {
-            window.location.hash = "#login";
-            showToast("Log in to explore our active jobs bank", "info");
-        }
+        window.location.hash = "#dashboard";
     });
 
     // 3. Form Submit Listeners
