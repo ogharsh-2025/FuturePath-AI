@@ -9,7 +9,7 @@
       "destination": "/frontend/assets/:path*"
     },
     {
-      "source": "/:path*",
+      "source": "/((?!api|assets|frontend).*)",
       "destination": "/frontend/index.html"
     }
   ]
