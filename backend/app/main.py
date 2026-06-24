@@ -77,16 +77,23 @@ else:
             "docs_url": "/docs"
         }
 
+import threading
+
 @app.on_event("startup")
 def run_migrations():
     """
-    Runs programmatic database creation on startup.
-    Ensures database schema is fully established without blocking Render.
+    Runs programmatic database creation on startup in a background thread.
+    Ensures database schema is established without blocking startup or causing port timeouts.
     """
-    try:
-        # Create all tables programmatically first
-        from backend.app.database.base import Base
-        Base.metadata.create_all(bind=engine)
-        print("[Database]: Tables created/verified successfully.")
-    except Exception as e:
-        print(f"[Database Error]: Startup database setup failed: {str(e)}")
+    def create_tables():
+        try:
+            # Create all tables programmatically first
+            from backend.app.database.base import Base
+            Base.metadata.create_all(bind=engine)
+            print("[Database]: Tables created/verified successfully in background.")
+        except Exception as e:
+            print(f"[Database Error]: Background database setup failed: {str(e)}")
+
+    thread = threading.Thread(target=create_tables)
+    thread.daemon = True
+    thread.start()
