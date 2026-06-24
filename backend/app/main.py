@@ -44,8 +44,10 @@ else:
 
 # Global exception handler for debugging 500 errors in deployment
 import traceback
-from fastapi import Request
+from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from backend.app.database.session import get_db, engine
 
 @app.exception_handler(Exception)
 async def debug_exception_handler(request: Request, exc: Exception):
@@ -56,3 +58,21 @@ async def debug_exception_handler(request: Request, exc: Exception):
             "traceback": traceback.format_exc()
         }
     )
+
+@app.get("/api/db-check")
+def db_check(db: Session = Depends(get_db)):
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        return {
+            "status": "connected",
+            "tables": tables,
+            "database_url": settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else settings.DATABASE_URL
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
