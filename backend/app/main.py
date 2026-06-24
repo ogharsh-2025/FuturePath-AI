@@ -26,22 +26,6 @@ app.include_router(jobs.router, prefix="/api/jobs", tags=["Jobs"])
 app.include_router(resumes.router, prefix="/api/resumes", tags=["Resumes"])
 app.include_router(recommendations.router, prefix="/api/recommendations", tags=["Recommendations"])
 
-# Dynamic mapping of the static files
-# Resolves: backend/app/main.py -> ../../frontend
-current_dir = os.path.dirname(os.path.abspath(__file__))
-frontend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "frontend"))
-
-if os.path.exists(frontend_dir):
-    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
-else:
-    @app.get("/")
-    def read_root():
-        return {
-            "status": "online",
-            "message": "AI-Powered Job Recommendation Platform Backend is running. Frontend directory not found.",
-            "docs_url": "/docs"
-        }
-
 # Global exception handler for debugging 500 errors in deployment
 import traceback
 from fastapi import Request, Depends
@@ -77,13 +61,35 @@ def db_check(db: Session = Depends(get_db)):
             "traceback": traceback.format_exc()
         }
 
+# Dynamic mapping of the static files
+# Resolves: backend/app/main.py -> ../../frontend
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "frontend"))
+
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    @app.get("/")
+    def read_root():
+        return {
+            "status": "online",
+            "message": "AI-Powered Job Recommendation Platform Backend is running. Frontend directory not found.",
+            "docs_url": "/docs"
+        }
+
 @app.on_event("startup")
 def run_migrations():
     """
-    Runs Alembic database migrations programmatically on application startup.
-    Ensures database schema is always up to date without blocking Render deployments.
+    Runs programmatic database creation and Alembic migrations on startup.
+    Ensures database schema is fully established without blocking Render.
     """
     try:
+        # Create all tables programmatically first
+        from backend.app.database.base import Base
+        Base.metadata.create_all(bind=engine)
+        print("[Database]: Tables created/verified successfully.")
+        
+        # Run Alembic migrations if any exist
         from alembic.config import Config
         from alembic import command
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -92,4 +98,4 @@ def run_migrations():
         command.upgrade(alembic_cfg, "head")
         print("[Database]: Migrations completed successfully.")
     except Exception as e:
-        print(f"[Database Error]: Migrations failed: {str(e)}")
+        print(f"[Database Error]: Startup database setup failed: {str(e)}")
