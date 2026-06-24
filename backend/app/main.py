@@ -76,3 +76,20 @@ def db_check(db: Session = Depends(get_db)):
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+@app.on_event("startup")
+def run_migrations():
+    """
+    Runs Alembic database migrations programmatically on application startup.
+    Ensures database schema is always up to date without blocking Render deployments.
+    """
+    try:
+        from alembic.config import Config
+        from alembic import command
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        alembic_ini_path = os.path.abspath(os.path.join(current_dir, "..", "alembic.ini"))
+        alembic_cfg = Config(alembic_ini_path)
+        command.upgrade(alembic_cfg, "head")
+        print("[Database]: Migrations completed successfully.")
+    except Exception as e:
+        print(f"[Database Error]: Migrations failed: {str(e)}")
