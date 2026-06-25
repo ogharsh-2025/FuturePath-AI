@@ -834,9 +834,44 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (data) {
-                showToast("Account created successfully! Please sign in.", "success");
-                document.getElementById("login-email").value = email;
-                window.location.hash = "#login";
+                showToast("Account created successfully! Logging you in...", "success");
+                
+                try {
+                    const loginData = await apiRequest("/api/auth/login", {
+                        method: "POST",
+                        body: { email, password }
+                    });
+
+                    if (loginData && loginData.access_token) {
+                        const profile = await apiRequest("/api/auth/me", {
+                            headers: { "Authorization": `Bearer ${loginData.access_token}` }
+                        });
+                        
+                        if (profile) {
+                            const registrationDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+                            handleLoginSuccess(loginData.access_token, { 
+                                name: profile.name, 
+                                email: profile.email,
+                                role: profile.role === "job_seeker" ? "Candidate" : "Recruiter",
+                                created_at: registrationDate
+                            }, profile.role);
+                        } else {
+                            handleLoginSuccess(loginData.access_token, { 
+                                name: name, 
+                                email: email,
+                                role: "Candidate",
+                                created_at: new Date().toLocaleDateString()
+                            }, "job_seeker");
+                        }
+                    } else {
+                        document.getElementById("login-email").value = email;
+                        window.location.hash = "#login";
+                    }
+                } catch (loginErr) {
+                    console.error("Auto login failed", loginErr);
+                    document.getElementById("login-email").value = email;
+                    window.location.hash = "#login";
+                }
             }
         } catch (err) {}
     });
