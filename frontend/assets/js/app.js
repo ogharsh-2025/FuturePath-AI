@@ -246,10 +246,10 @@ async function loadDashboard() {
         if (unreadCount > 0) {
             badge.innerText = unreadCount;
             badge.classList.remove("hidden");
-            indicator.classList.remove("hidden");
+            if (indicator) indicator.classList.remove("hidden");
         } else {
             badge.classList.add("hidden");
-            indicator.classList.add("hidden");
+            if (indicator) indicator.classList.add("hidden");
         }
 
         const resume = await apiRequest("/api/resumes/my-resume").catch(() => null);
