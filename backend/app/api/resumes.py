@@ -53,3 +53,29 @@ def get_my_resume(
             detail="No resume uploaded yet"
         )
     return resume
+
+@router.delete("/reset", status_code=status.HTTP_204_NO_CONTENT)
+def reset_resume(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Deletes the current logged-in user's resume and all associated recommendations.
+    """
+    import os
+    resume = ResumeService.get_user_resume(db, user_id=current_user.id)
+    if resume:
+        from backend.app.repositories.resume_repository import ResumeRepository
+        from backend.app.repositories.recommendation_repository import RecommendationRepository
+        
+        # Remove file physically if it exists
+        if resume.resume_file and os.path.exists(resume.resume_file):
+            try:
+                os.remove(resume.resume_file)
+            except Exception:
+                pass
+                
+        ResumeRepository.delete(db, resume)
+        RecommendationRepository.delete_by_user_id(db, current_user.id)
+        
+    return None

@@ -736,7 +736,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.hash = "#upload";
     });
 
-    // Refresh dashboard data
+    // Refresh/Reset dashboard data (deletes active resume and clears matches)
     const refreshBtn = document.getElementById("btn-dash-refresh-all");
     if (refreshBtn) {
         refreshBtn.addEventListener("click", async () => {
@@ -744,10 +744,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (icon) icon.classList.add("fa-spin");
             
             try {
+                // Wipe active resume and recommendations on the backend
+                await apiRequest("/api/resumes/reset", { method: "DELETE" });
+                
+                // Reload dashboard state (will show empty/reupload UI)
                 await loadDashboard();
-                showToast("Dashboard data and job matches refreshed.", "success");
+                showToast("Resume data and matches cleared. Please reupload your resume.", "info");
             } catch (err) {
-                showToast("Error refreshing dashboard data.", "error");
+                showToast("Error resetting dashboard data.", "error");
             } finally {
                 if (icon) icon.classList.remove("fa-spin");
             }
