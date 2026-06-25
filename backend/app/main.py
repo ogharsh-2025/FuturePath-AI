@@ -77,6 +77,57 @@ else:
             "docs_url": "/docs"
         }
 
+def seed_sample_jobs():
+    """
+    Seeds default high-quality sample jobs on startup if database is empty.
+    """
+    from backend.app.database.session import SessionLocal
+    from backend.app.models.job import Job
+    from backend.app.services.job_service import JobService
+    
+    db = SessionLocal()
+    try:
+        job_count = db.query(Job).count()
+        if job_count == 0:
+            print("[Database]: Seeding default tech job postings...")
+            sample_jobs = [
+                {
+                    "title": "Machine Learning Specialist",
+                    "company": "DeepMinded AI",
+                    "location": "London, UK (Hybrid)",
+                    "salary": "$120,000 - $150,000",
+                    "description": "We are looking for an ML Specialist to design and deploy models. Required skills: Python, PyTorch, Docker, Kubernetes, Linux."
+                },
+                {
+                    "title": "Frontend Engineer",
+                    "company": "FuturePath Labs",
+                    "location": "New York, NY (Remote)",
+                    "salary": "$90,000 - $120,000",
+                    "description": "Join our team to build next-generation SPA dashboards. Required skills: HTML, CSS, JavaScript, TypeScript, React, Next.js, Git."
+                },
+                {
+                    "title": "Backend Developer",
+                    "company": "Octocat Systems",
+                    "location": "San Francisco, CA (Remote)",
+                    "salary": "$110,000 - $140,000",
+                    "description": "Building robust cloud microservices and REST APIs. Required skills: Python, FastAPI, PostgreSQL, Redis, Docker, Git, CI/CD."
+                },
+                {
+                    "title": "DevOps Engineer",
+                    "company": "CloudScale Co",
+                    "location": "Seattle, WA (Remote)",
+                    "salary": "$130,000 - $160,000",
+                    "description": "Scaling cloud infrastructures and automating deployment pipelines. Required skills: AWS, Docker, Kubernetes, Terraform, Jenkins, Linux, Bash, Git."
+                }
+            ]
+            for job_data in sample_jobs:
+                JobService.create_job(db, job_data)
+            print("[Database]: Seeding complete.")
+    except Exception as e:
+        print(f"[Database Error]: Seeding jobs failed: {str(e)}")
+    finally:
+        db.close()
+
 import threading
 
 @app.on_event("startup")
@@ -91,6 +142,8 @@ def run_migrations():
             from backend.app.database.base import Base
             Base.metadata.create_all(bind=engine)
             print("[Database]: Tables created/verified successfully in background.")
+            # Seed default job listings if empty
+            seed_sample_jobs()
         except Exception as e:
             print(f"[Database Error]: Background database setup failed: {str(e)}")
 
