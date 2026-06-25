@@ -5,7 +5,10 @@
  */
 
 // API Base URL config (Relative path works because FastAPI hosts the folder)
-const API_BASE = "";
+// Dynamically resolve backend endpoint based on environment
+const API_BASE = window.location.hostname.includes("render.com") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? ""
+    : "https://futurepath-backend-rn47.onrender.com";
 
 // Global State
 const state = {
