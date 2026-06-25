@@ -118,7 +118,6 @@ const views = {
 function router() {
     let hash = window.location.hash || "#dashboard";
     
-    // Parse query/param variables out of hash
     let viewKey = hash.substring(1);
     let extraParam = null;
     
@@ -136,19 +135,17 @@ function router() {
             window.location.hash = "#dashboard";
             return;
         }
-        // Configure auth shell (hide sidebar & header)
         document.getElementById("sidebar").style.display = "none";
         document.getElementById("app-header").style.display = "none";
         document.getElementById("app-main").style.marginLeft = "0";
         
-        toggleAuthForms(viewKey === "register");
-        viewKey = "login"; // Map register to login view container
+        toggleAuthMode(viewKey === "register");
+        viewKey = "login";
     } else {
         if (!state.token) {
             window.location.hash = "#login";
             return;
         }
-        // Configure main shell (show sidebar & header)
         document.getElementById("sidebar").style.display = "";
         document.getElementById("app-header").style.display = "";
         document.getElementById("app-main").style.marginLeft = "";
@@ -165,7 +162,6 @@ function router() {
         views[viewKey].classList.add("active");
         document.getElementById("breadcrumb-active").innerText = viewKey.replace("-", " ").toUpperCase();
     } else {
-        // Fallback
         if (state.token) {
             views.dashboard.classList.add("active");
             document.getElementById("breadcrumb-active").innerText = "DASHBOARD";
@@ -192,7 +188,6 @@ function router() {
         }
     });
 
-    // Close mobile side menu if open
     document.getElementById("sidebar").classList.remove("open");
 
     // Load Data for specific views
@@ -240,20 +235,16 @@ async function loadDashboard() {
     const matchesList = document.getElementById("dash-matches-list");
     const matchesCount = document.getElementById("dash-matches-count");
 
-    // Update active user layout
     updateUserWidgetUI();
 
-    // Clear and set loading states
     matchesList.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Matching jobs...</p></div>`;
 
     try {
-        // Load KPIs & Alerts count
         const notifs = await apiRequest("/api/notifications");
         const unreadCount = notifs.filter(n => !n.is_read).length;
         const badge = document.getElementById("menu-notif-count");
         const indicator = document.getElementById("header-notif-indicator");
         
-        // Settings badge count updates
         if (unreadCount > 0) {
             badge.innerText = unreadCount;
             badge.classList.remove("hidden");
@@ -263,7 +254,6 @@ async function loadDashboard() {
             indicator.classList.add("hidden");
         }
 
-        // Fetch user resume
         const resume = await apiRequest("/api/resumes/my-resume").catch(() => null);
         state.activeResume = resume;
 
@@ -273,13 +263,9 @@ async function loadDashboard() {
             document.getElementById("resume-filename").innerText = resume.resume_file.split(/[\\/]/).pop().replace(/^user_\d+_/, "");
             skillsCloud.innerHTML = resume.skills.map(s => `<span class="tag">${s.skill_name}</span>`).join("");
 
-            // Set default ATS compatibility metric
             document.getElementById("kpi-ats-score").innerText = "84%";
-            
-            // Set github score KPI
             document.getElementById("kpi-github-score").innerText = "78%";
 
-            // Fetch Interview attempts count for KPI
             const attempts = await apiRequest("/api/interview-prep/history").catch(() => []);
             if (attempts.length > 0) {
                 const avgScore = Math.round(attempts.reduce((acc, a) => acc + a.score, 0) / attempts.length);
@@ -288,7 +274,6 @@ async function loadDashboard() {
                 document.getElementById("kpi-interview-score").innerText = "N/A";
             }
 
-            // Fetch job recommendations
             const recs = await apiRequest("/api/recommendations/");
             if (recs && recs.length > 0) {
                 matchesCount.innerText = `${recs.length} matching jobs`;
@@ -309,13 +294,11 @@ async function loadDashboard() {
                     </div>
                 `).join("");
 
-                // Populate simulator target job options
                 const simJobSelect = document.getElementById("simulator-job-select");
                 simJobSelect.innerHTML = `<option value="">-- Choose a target job --</option>` + recs.map(r => `
                     <option value="${r.job_id}">${r.job_title} (${r.company})</option>
                 `).join("");
                 
-                // Enable simulator elements
                 document.getElementById("btn-simulate-gap").disabled = false;
 
             } else {
@@ -323,7 +306,6 @@ async function loadDashboard() {
                 matchesList.innerHTML = `<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No jobs matching your skills. Try optimizing keywords!</p></div>`;
             }
         } else {
-            // No resume uploaded
             resumeEmpty.classList.remove("hidden");
             resumeDetails.classList.add("hidden");
             document.getElementById("kpi-ats-score").innerText = "N/A";
@@ -402,7 +384,6 @@ async function loadJobDetails(jobId) {
         document.getElementById("jd-match-percent").innerText = `${details.success_probability}%`;
         document.getElementById("jd-success-explanation").innerText = details.reasons.join(" ");
 
-        // Skills lists
         const matched = jobMatch.job_skills.filter(s => !jobMatch.missing_skills.includes(s));
         document.getElementById("jd-matched-count").innerText = matched.length;
         document.getElementById("jd-matched-cloud").innerHTML = matched.map(s => `<span class="tag">${s}</span>`).join("");
@@ -412,7 +393,6 @@ async function loadJobDetails(jobId) {
             ? jobMatch.missing_skills.map(s => `<span class="tag-missing">${s}</span>`).join("")
             : `<span class="badge badge-success">Fully Ready! No Missing Skills.</span>`;
 
-        // Wire path button
         const roadmapBtn = document.getElementById("btn-jd-roadmap");
         roadmapBtn.onclick = () => {
             window.location.hash = `#roadmap/${jobId}`;
@@ -431,14 +411,12 @@ async function loadRoadmap(jobId) {
     try {
         let roadmapData;
         if (jobId) {
-            // Generate or fetch
             roadmapData = await apiRequest(`/api/learning-paths/generate`, {
                 method: "POST",
-                body: { target_job: "" } // Handled dynamically on backend matching
+                body: { target_job: "" }
             });
             roadmapData = roadmapData.roadmap_data;
         } else {
-            // Fetch history
             const hist = await apiRequest("/api/learning-paths/history");
             if (hist.length > 0) {
                 roadmapData = hist[0].roadmap_data;
@@ -500,7 +478,6 @@ async function loadMockInterviewHistory() {
                 </div>
             `).join("");
 
-            // Draw Trend Chart
             const scores = history.slice().reverse().map(h => h.score);
             const labels = history.slice().reverse().map((h, i) => `Session ${i+1}`);
             
@@ -541,7 +518,6 @@ async function loadSalaryAndTrends() {
     try {
         const trends = await apiRequest("/api/salary-prediction/trends");
         
-        // 1. Market Demand Chart
         drawChart("marketDemandChart", "bar", {
             data: {
                 labels: trends.demanded_skills.map(s => s.name),
@@ -558,7 +534,6 @@ async function loadSalaryAndTrends() {
             }
         });
 
-        // 2. Highest Paying Chart
         drawChart("highestPayingChart", "bar", {
             data: {
                 labels: trends.highest_paying_skills.map(s => s.name),
@@ -575,7 +550,6 @@ async function loadSalaryAndTrends() {
             }
         });
 
-        // Fetch Career predictions
         const career = await apiRequest("/api/career-path-predictor");
         timeline.innerHTML = career.timeline.map(step => `
             <div class="forecast-item">
@@ -593,7 +567,7 @@ async function loadSalaryAndTrends() {
     }
 }
 
-// 7. Load settings panel elements (Alert details, Notifications, Theme checkbox)
+// 7. Load settings panel elements (Read-only Details, Notifications, Theme switcher)
 async function loadSettings() {
     // 1. Load alerts preferences
     try {
@@ -605,10 +579,12 @@ async function loadSettings() {
         document.getElementById("setting-target-location").value = alertSettings.preferences.location || "";
     } catch (err) {}
 
-    // 2. Populate profile details fields from state
+    // 2. Populate read-only account details from state (Name, Email, Role, Date)
     if (state.user) {
-        document.getElementById("profile-name").value = state.user.name || "";
-        document.getElementById("profile-email").value = state.user.email || "";
+        document.getElementById("profile-detail-name").innerText = state.user.name || "Guest User";
+        document.getElementById("profile-detail-email").innerText = state.user.email || "guest@example.com";
+        document.getElementById("profile-detail-role").innerText = state.user.role || "Candidate";
+        document.getElementById("profile-detail-date").innerText = state.user.created_at || "2026-06-25";
     }
 
     // 3. Sync dark theme toggle state
@@ -657,7 +633,6 @@ window.markNotificationRead = async function(notifId) {
             if (btn) btn.remove();
         }
         showToast("Notification marked as read.", "success");
-        // Reload dashboard/settings count
         loadDashboard();
         loadSettings();
     } catch (err) {}
@@ -694,15 +669,25 @@ function handleLogout() {
     window.location.hash = "#login";
 }
 
-function toggleAuthForms(showRegister) {
-    const loginCard = document.getElementById("login-card");
-    const registerCard = document.getElementById("register-card");
+function toggleAuthMode(showRegister) {
+    const loginForm = document.getElementById("form-login");
+    const registerForm = document.getElementById("form-register");
+    const toggleBtn = document.getElementById("btn-toggle-auth-mode");
+    const cardTitle = document.getElementById("auth-card-title");
+    const cardSubtitle = document.getElementById("auth-card-subtitle");
+
     if (showRegister) {
-        loginCard.classList.add("hidden");
-        registerCard.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+        toggleBtn.innerText = "Back to Login";
+        cardTitle.innerText = "Create Account";
+        cardSubtitle.innerText = "Get started with AI-powered career intelligence";
     } else {
-        loginCard.classList.remove("hidden");
-        registerCard.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+        toggleBtn.innerText = "Sign Up";
+        cardTitle.innerText = "Sign in to FuturePath.AI";
+        cardSubtitle.innerText = "Optimize your career intelligence";
     }
 }
 
@@ -724,7 +709,6 @@ function updateUserWidgetUI() {
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. Initial State Checks
     router();
     window.addEventListener("hashchange", router);
 
@@ -758,25 +742,6 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast(`Theme switched to ${targetTheme} mode.`, "success");
     });
 
-    // Profile Settings Local Info update (Simulated/Persisted in LocalStorage)
-    document.getElementById("form-profile-settings").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const updatedName = document.getElementById("profile-name").value.trim();
-        const updatedEmail = document.getElementById("profile-email").value.trim();
-        
-        if (!updatedName || !updatedEmail) {
-            showToast("Profile details cannot be blank.", "error");
-            return;
-        }
-
-        const newUser = { name: updatedName, email: updatedEmail };
-        state.user = newUser;
-        localStorage.setItem("user", JSON.stringify(newUser));
-        
-        updateUserWidgetUI();
-        showToast("Profile details updated successfully.", "success");
-    });
-
     // Settings Database Diagnostics checker
     document.getElementById("btn-check-db").addEventListener("click", async () => {
         const box = document.getElementById("db-check-results");
@@ -802,10 +767,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Auth actions: Continue as Guest Click
-    document.getElementById("btn-login-guest").addEventListener("click", () => {
-        // Mock Guest token authorization details
-        handleLoginSuccess("guest-token", { name: "Guest User", email: "guest@example.com" }, "job_seeker");
+    // Auth actions: Toggle between Login and Register modes (Left corner button)
+    document.getElementById("btn-toggle-auth-mode").addEventListener("click", (e) => {
+        e.preventDefault();
+        const registerFormVisible = !document.getElementById("form-register").classList.contains("hidden");
+        
+        // If register form is visible, transition to login (registerFormVisible is true -> toggleAuthMode(false))
+        // If login form is visible, transition to register (registerFormVisible is false -> toggleAuthMode(true))
+        toggleAuthMode(!registerFormVisible);
+    });
+
+    // Auth actions: Continue as Guest Click (Right corner button)
+    document.getElementById("btn-login-guest").addEventListener("click", (e) => {
+        e.preventDefault();
+        handleLoginSuccess("guest-token", { 
+            name: "Guest User", 
+            email: "guest@example.com",
+            role: "Candidate",
+            created_at: new Date().toLocaleDateString()
+        }, "job_seeker");
+    });
+
+    // Auth actions: Password Visibility Toggle Listener
+    document.querySelectorAll(".toggle-password-visibility").forEach(eyeIcon => {
+        eyeIcon.addEventListener("click", () => {
+            // Find sibling password input field
+            const passwordInput = eyeIcon.previousElementSibling;
+            if (passwordInput && passwordInput.tagName === "INPUT") {
+                const currentType = passwordInput.getAttribute("type");
+                const nextType = currentType === "password" ? "text" : "password";
+                passwordInput.setAttribute("type", nextType);
+                
+                // Toggle eye icon class
+                if (nextType === "text") {
+                    eyeIcon.classList.remove("fa-eye");
+                    eyeIcon.classList.add("fa-eye-slash");
+                } else {
+                    eyeIcon.classList.remove("fa-eye-slash");
+                    eyeIcon.classList.add("fa-eye");
+                }
+            }
+        });
     });
 
     // Auth actions: Login Form submission
@@ -821,13 +823,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (data && data.access_token) {
-                // Fetch profile specifications
                 const profile = await apiRequest("/api/auth/me", {
                     headers: { "Authorization": `Bearer ${data.access_token}` }
                 });
                 
                 if (profile) {
-                    handleLoginSuccess(data.access_token, { name: profile.name, email: profile.email }, profile.role);
+                    const registrationDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+                    handleLoginSuccess(data.access_token, { 
+                        name: profile.name, 
+                        email: profile.email,
+                        role: profile.role === "job_seeker" ? "Candidate" : "Recruiter",
+                        created_at: registrationDate
+                    }, profile.role);
                 }
             }
         } catch (e) {}
@@ -854,20 +861,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data) {
                 showToast("Account created successfully! Please sign in.", "success");
                 document.getElementById("login-email").value = email;
-                toggleAuthForms(false);
-                window.location.hash = "#login";
+                toggleAuthMode(false); // Switch back to login panel
             }
         } catch (err) {}
-    });
-
-    // Auth Form Toggle links
-    document.getElementById("link-to-register").addEventListener("click", (e) => {
-        e.preventDefault();
-        window.location.hash = "#register";
-    });
-    document.getElementById("link-to-login").addEventListener("click", (e) => {
-        e.preventDefault();
-        window.location.hash = "#login";
     });
 
     // Dashboard Simulator target job select checklist loader
@@ -981,12 +977,10 @@ document.addEventListener("DOMContentLoaded", () => {
             activeSession.answers = [];
             activeSession.currentIndex = 0;
 
-            // Display active view
             document.getElementById("int-setup-card").classList.add("hidden");
             document.getElementById("int-feedback-card").classList.add("hidden");
             document.getElementById("int-session-card").classList.remove("hidden");
 
-            // Load first question
             renderActiveQuestion();
             showToast("Mock interview started. Write complete answers.", "success");
         } catch (e) {}

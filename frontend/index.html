@@ -13,7 +13,7 @@
     <!-- ChartJS for stats & trends -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Main Style Sheet -->
-    <link rel="stylesheet" href="assets/css/style.css?v=1.0.3">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.0.4">
 </head>
 <body>
 
@@ -103,13 +103,15 @@
                 <!-- ----------------- VIEW: LOGIN / AUTH LANDING ----------------- -->
                 <section id="view-login" class="spa-view">
                     <div class="login-wrapper">
-                        <div class="dashboard-card login-card" id="login-card">
+                        <!-- Single Unified Auth Card -->
+                        <div class="dashboard-card login-card">
                             <div class="login-header">
                                 <i class="fa-solid fa-brain logo-icon-big"></i>
-                                <h2>Sign in to FuturePath.AI</h2>
-                                <p class="text-muted">Enter credentials or explore the platform instantly</p>
+                                <h2 id="auth-card-title">Sign in to FuturePath.AI</h2>
+                                <p class="text-muted" id="auth-card-subtitle">Optimize your career intelligence</p>
                             </div>
                             
+                            <!-- Login Form -->
                             <form id="form-login">
                                 <div class="form-group">
                                     <label for="login-email">Email Address</label>
@@ -117,48 +119,39 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="login-password">Password</label>
-                                    <input type="password" id="login-password" required placeholder="••••••••" class="form-control">
+                                    <div class="password-input-wrapper" style="position: relative;">
+                                        <input type="password" id="login-password" required placeholder="••••••••" class="form-control" style="padding-right: 40px;">
+                                        <i class="fa-solid fa-eye toggle-password-visibility" id="login-password-eye" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-full btn-large">Sign In</button>
+                                <button type="submit" class="btn btn-primary btn-full btn-large">Login</button>
                             </form>
 
-                            <div class="login-divider">
-                                <span>or</span>
-                            </div>
-
-                            <button class="btn btn-secondary btn-full btn-large" id="btn-login-guest"><i class="fa-solid fa-user-secret"></i> Continue as Guest</button>
-
-                            <p class="auth-toggle-text" style="margin-top: 20px; text-align: center; font-size: 0.85rem;">
-                                Don't have an account? <a href="#" id="link-to-register">Register here</a>
-                            </p>
-                        </div>
-
-                        <div class="dashboard-card login-card hidden" id="register-card">
-                            <div class="login-header">
-                                <i class="fa-solid fa-brain logo-icon-big"></i>
-                                <h2>Create Account</h2>
-                                <p class="text-muted">Get started with AI-powered career intelligence</p>
-                            </div>
-                            
-                            <form id="form-register">
+                            <!-- Register Form (Hidden by default, toggled in JS) -->
+                            <form id="form-register" class="hidden">
                                 <div class="form-group">
                                     <label for="register-name">Full Name</label>
-                                    <input type="text" id="register-name" required placeholder="John Doe" class="form-control">
+                                    <input type="text" id="register-name" placeholder="John Doe" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label for="register-email">Email Address</label>
-                                    <input type="email" id="register-email" required placeholder="name@company.com" class="form-control">
+                                    <input type="email" id="register-email" placeholder="name@company.com" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label for="register-password">Password</label>
-                                    <input type="password" id="register-password" required placeholder="Min 6 characters" class="form-control">
+                                    <div class="password-input-wrapper" style="position: relative;">
+                                        <input type="password" id="register-password" placeholder="Min 6 characters" class="form-control" style="padding-right: 40px;">
+                                        <i class="fa-solid fa-eye toggle-password-visibility" id="register-password-eye" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-full btn-large">Create Account</button>
+                                <button type="submit" class="btn btn-primary btn-full btn-large">Register</button>
                             </form>
 
-                            <p class="auth-toggle-text" style="margin-top: 20px; text-align: center; font-size: 0.85rem;">
-                                Already have an account? <a href="#" id="link-to-login">Login here</a>
-                            </p>
+                            <!-- Bottom Navigation Options inside the corner of card -->
+                            <div style="display: flex; justify-content: space-between; margin-top: 24px; font-size: 0.85rem;">
+                                <a href="#" id="btn-toggle-auth-mode" style="font-weight: 600;">Sign Up</a>
+                                <a href="#" id="btn-login-guest" style="font-weight: 600; color: var(--text-muted);">Login as Guest</a>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -662,22 +655,29 @@
 
                     <div class="settings-grid">
                         <div class="settings-left-pane">
-                            <!-- 1. Profile Settings Card -->
+                            <!-- 1. Profile Settings Details Card (Read-Only) -->
                             <div class="dashboard-card">
-                                <h3>Profile Details</h3>
-                                <p class="card-desc">View and manage your account credentials</p>
+                                <h3>Account Information</h3>
+                                <p class="card-desc">Details of the active user profile used during sign-in</p>
                                 
-                                <form id="form-profile-settings" style="margin-top: 16px;">
-                                    <div class="form-group">
-                                        <label for="profile-name">Full Name</label>
-                                        <input type="text" id="profile-name" class="form-control" placeholder="Guest User">
+                                <div class="profile-details-list" style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px;">
+                                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                                        <span style="font-weight:600; color:var(--text-muted);">Full Name</span>
+                                        <span id="profile-detail-name" style="font-weight:500;">Guest User</span>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="profile-email">Email Address</label>
-                                        <input type="email" id="profile-email" class="form-control" placeholder="guest@example.com">
+                                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                                        <span style="font-weight:600; color:var(--text-muted);">Email Address</span>
+                                        <span id="profile-detail-email" style="font-weight:500;">guest@example.com</span>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" id="btn-save-profile">Update Profile Info</button>
-                                </form>
+                                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+                                        <span style="font-weight:600; color:var(--text-muted);">Account Role</span>
+                                        <span id="profile-detail-role" style="font-weight:500; text-transform: capitalize;">Candidate</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; padding:8px 0;">
+                                        <span style="font-weight:600; color:var(--text-muted);">Registered Date</span>
+                                        <span id="profile-detail-date" style="font-weight:500;">2026-06-25</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 2. Job Match Alerts settings -->
@@ -697,7 +697,7 @@
                                 <div class="settings-checkbox-group">
                                     <label class="checkbox-container">
                                         <input type="checkbox" id="setting-notif-email" checked>
-                                        <span>Send email alerts to address</span>
+                                        <span>Send email alerts</span>
                                     </label>
                                     <label class="checkbox-container">
                                         <input type="checkbox" id="setting-notif-app" checked>
@@ -814,6 +814,6 @@
     </nav>
 
     <!-- Main JavaScript Logic -->
-    <script src="assets/js/app.js?v=1.0.3"></script>
+    <script src="assets/js/app.js?v=1.0.4"></script>
 </body>
 </html>
