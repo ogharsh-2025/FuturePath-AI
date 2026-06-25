@@ -103,6 +103,7 @@ async function apiRequest(endpoint, options = {}) {
 // ==========================================================================
 const views = {
     login: document.getElementById("view-login"),
+    register: document.getElementById("view-register"),
     dashboard: document.getElementById("view-dashboard"),
     jobs: document.getElementById("view-jobs"),
     jobDetails: document.getElementById("view-job-details"),
@@ -138,9 +139,6 @@ function router() {
         document.getElementById("sidebar").style.display = "none";
         document.getElementById("app-header").style.display = "none";
         document.getElementById("app-main").style.marginLeft = "0";
-        
-        toggleAuthMode(viewKey === "register");
-        viewKey = "login";
     } else {
         if (!state.token) {
             window.location.hash = "#login";
@@ -669,28 +667,6 @@ function handleLogout() {
     window.location.hash = "#login";
 }
 
-function toggleAuthMode(showRegister) {
-    const loginForm = document.getElementById("form-login");
-    const registerForm = document.getElementById("form-register");
-    const toggleBtn = document.getElementById("btn-toggle-auth-mode");
-    const cardTitle = document.getElementById("auth-card-title");
-    const cardSubtitle = document.getElementById("auth-card-subtitle");
-
-    if (showRegister) {
-        loginForm.classList.add("hidden");
-        registerForm.classList.remove("hidden");
-        toggleBtn.innerText = "Back to Login";
-        cardTitle.innerText = "Create Account";
-        cardSubtitle.innerText = "Get started with AI-powered career intelligence";
-    } else {
-        loginForm.classList.remove("hidden");
-        registerForm.classList.add("hidden");
-        toggleBtn.innerText = "Sign Up";
-        cardTitle.innerText = "Sign in to FuturePath.AI";
-        cardSubtitle.innerText = "Optimize your career intelligence";
-    }
-}
-
 function updateUserWidgetUI() {
     const nameLabel = document.getElementById("sidebar-user-name");
     const emailLabel = document.getElementById("sidebar-user-email");
@@ -767,18 +743,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Auth actions: Toggle between Login and Register modes (Left corner button)
-    document.getElementById("btn-toggle-auth-mode").addEventListener("click", (e) => {
+    // Auth actions: Continue as Guest Click (Login view)
+    document.getElementById("btn-login-guest").addEventListener("click", (e) => {
         e.preventDefault();
-        const registerFormVisible = !document.getElementById("form-register").classList.contains("hidden");
-        
-        // If register form is visible, transition to login (registerFormVisible is true -> toggleAuthMode(false))
-        // If login form is visible, transition to register (registerFormVisible is false -> toggleAuthMode(true))
-        toggleAuthMode(!registerFormVisible);
+        handleLoginSuccess("guest-token", { 
+            name: "Guest User", 
+            email: "guest@example.com",
+            role: "Candidate",
+            created_at: new Date().toLocaleDateString()
+        }, "job_seeker");
     });
 
-    // Auth actions: Continue as Guest Click (Right corner button)
-    document.getElementById("btn-login-guest").addEventListener("click", (e) => {
+    // Auth actions: Continue as Guest Click (Register view)
+    document.getElementById("btn-register-guest").addEventListener("click", (e) => {
         e.preventDefault();
         handleLoginSuccess("guest-token", { 
             name: "Guest User", 
@@ -791,14 +768,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Auth actions: Password Visibility Toggle Listener
     document.querySelectorAll(".toggle-password-visibility").forEach(eyeIcon => {
         eyeIcon.addEventListener("click", () => {
-            // Find sibling password input field
             const passwordInput = eyeIcon.previousElementSibling;
             if (passwordInput && passwordInput.tagName === "INPUT") {
                 const currentType = passwordInput.getAttribute("type");
                 const nextType = currentType === "password" ? "text" : "password";
                 passwordInput.setAttribute("type", nextType);
                 
-                // Toggle eye icon class
                 if (nextType === "text") {
                     eyeIcon.classList.remove("fa-eye");
                     eyeIcon.classList.add("fa-eye-slash");
@@ -861,7 +836,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data) {
                 showToast("Account created successfully! Please sign in.", "success");
                 document.getElementById("login-email").value = email;
-                toggleAuthMode(false); // Switch back to login panel
+                window.location.hash = "#login";
             }
         } catch (err) {}
     });

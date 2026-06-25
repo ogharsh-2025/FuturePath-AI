@@ -13,7 +13,7 @@
     <!-- ChartJS for stats & trends -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Main Style Sheet -->
-    <link rel="stylesheet" href="assets/css/style.css?v=1.0.4">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.0.5">
 </head>
 <body>
 
@@ -100,18 +100,16 @@
             <!-- Inner View Content Container -->
             <div class="app-view-container">
 
-                <!-- ----------------- VIEW: LOGIN / AUTH LANDING ----------------- -->
+                <!-- ----------------- VIEW: STANDALONE LOGIN ----------------- -->
                 <section id="view-login" class="spa-view">
                     <div class="login-wrapper">
-                        <!-- Single Unified Auth Card -->
                         <div class="dashboard-card login-card">
                             <div class="login-header">
                                 <i class="fa-solid fa-brain logo-icon-big"></i>
-                                <h2 id="auth-card-title">Sign in to FuturePath.AI</h2>
-                                <p class="text-muted" id="auth-card-subtitle">Optimize your career intelligence</p>
+                                <h2>Sign in to FuturePath.AI</h2>
+                                <p class="text-muted">Optimize your career intelligence</p>
                             </div>
                             
-                            <!-- Login Form -->
                             <form id="form-login">
                                 <div class="form-group">
                                     <label for="login-email">Email Address</label>
@@ -127,30 +125,48 @@
                                 <button type="submit" class="btn btn-primary btn-full btn-large">Login</button>
                             </form>
 
-                            <!-- Register Form (Hidden by default, toggled in JS) -->
-                            <form id="form-register" class="hidden">
+                            <!-- Bottom Links in corners -->
+                            <div style="display: flex; justify-content: space-between; margin-top: 24px; font-size: 0.85rem;">
+                                <a href="#register" style="font-weight: 600;">Sign Up</a>
+                                <a href="#" id="btn-login-guest" style="font-weight: 600; color: var(--text-muted);">Login as Guest</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ----------------- VIEW: STANDALONE SIGN UP / REGISTER ----------------- -->
+                <section id="view-register" class="spa-view">
+                    <div class="login-wrapper">
+                        <div class="dashboard-card login-card">
+                            <div class="login-header">
+                                <i class="fa-solid fa-brain logo-icon-big"></i>
+                                <h2>Create Account</h2>
+                                <p class="text-muted">Get started with AI-powered career intelligence</p>
+                            </div>
+                            
+                            <form id="form-register">
                                 <div class="form-group">
                                     <label for="register-name">Full Name</label>
-                                    <input type="text" id="register-name" placeholder="John Doe" class="form-control">
+                                    <input type="text" id="register-name" required placeholder="John Doe" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label for="register-email">Email Address</label>
-                                    <input type="email" id="register-email" placeholder="name@company.com" class="form-control">
+                                    <input type="email" id="register-email" required placeholder="name@company.com" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label for="register-password">Password</label>
                                     <div class="password-input-wrapper" style="position: relative;">
-                                        <input type="password" id="register-password" placeholder="Min 6 characters" class="form-control" style="padding-right: 40px;">
+                                        <input type="password" id="register-password" required placeholder="Min 6 characters" class="form-control" style="padding-right: 40px;">
                                         <i class="fa-solid fa-eye toggle-password-visibility" id="register-password-eye" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-full btn-large">Register</button>
                             </form>
 
-                            <!-- Bottom Navigation Options inside the corner of card -->
+                            <!-- Bottom Links in corners -->
                             <div style="display: flex; justify-content: space-between; margin-top: 24px; font-size: 0.85rem;">
-                                <a href="#" id="btn-toggle-auth-mode" style="font-weight: 600;">Sign Up</a>
-                                <a href="#" id="btn-login-guest" style="font-weight: 600; color: var(--text-muted);">Login as Guest</a>
+                                <a href="#login" style="font-weight: 600;">Back to Login</a>
+                                <a href="#" id="btn-register-guest" style="font-weight: 600; color: var(--text-muted);">Login as Guest</a>
                             </div>
                         </div>
                     </div>
@@ -814,6 +830,6 @@
     </nav>
 
     <!-- Main JavaScript Logic -->
-    <script src="assets/js/app.js?v=1.0.4"></script>
+    <script src="assets/js/app.js?v=1.0.5"></script>
 </body>
 </html>
