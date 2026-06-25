@@ -13,14 +13,14 @@
     <!-- ChartJS for stats & trends -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Main Style Sheet -->
-    <link rel="stylesheet" href="assets/css/style.css?v=1.0.2">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.0.3">
 </head>
 <body>
 
     <!-- Global Toast Alert Message Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <div class="app-layout">
+    <div class="app-layout" id="app-layout">
         <!-- 1. LEFT SIDEBAR NAVIGATION (Desktop) -->
         <aside class="app-sidebar" id="sidebar">
             <div class="sidebar-brand">
@@ -38,10 +38,6 @@
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Jobs</span>
                 </a>
-                <a href="#resume-optimizer" class="menu-item" data-view="resume-optimizer">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Resume Optimizer</span>
-                </a>
                 <a href="#resume-analyzer" class="menu-item" data-view="resume-analyzer">
                     <i class="fa-solid fa-magnifying-glass-chart"></i>
                     <span>JD Analyzer</span>
@@ -54,10 +50,6 @@
                     <i class="fa-brands fa-github"></i>
                     <span>GitHub Analyzer</span>
                 </a>
-                <a href="#career-coach" class="menu-item" data-view="career-coach">
-                    <i class="fa-solid fa-user-tie"></i>
-                    <span>Career Coach</span>
-                </a>
                 <a href="#roadmap" class="menu-item" data-view="roadmap">
                     <i class="fa-solid fa-route"></i>
                     <span>Learning Roadmap</span>
@@ -66,18 +58,10 @@
                     <i class="fa-solid fa-chart-line-up"></i>
                     <span>Salary & Trends</span>
                 </a>
-                <a href="#notifications" class="menu-item" data-view="notifications">
-                    <i class="fa-solid fa-bell"></i>
-                    <span>Notifications</span>
-                    <span class="notif-badge hidden" id="menu-notif-count">0</span>
-                </a>
                 <a href="#settings" class="menu-item" data-view="settings">
                     <i class="fa-solid fa-gear"></i>
                     <span>Settings</span>
-                </a>
-                <a href="#about-me" class="menu-item" data-view="about-me">
-                    <i class="fa-solid fa-id-badge"></i>
-                    <span>About Me</span>
+                    <span class="notif-badge hidden" id="menu-notif-count">0</span>
                 </a>
             </nav>
 
@@ -85,17 +69,18 @@
                 <div class="user-widget">
                     <div class="avatar"><i class="fa-solid fa-user"></i></div>
                     <div class="user-info">
-                        <span class="user-name">Guest User</span>
-                        <span class="user-role">Candidate</span>
+                        <span class="user-name" id="sidebar-user-name">Guest User</span>
+                        <span class="user-role" id="sidebar-user-email">guest@example.com</span>
                     </div>
                 </div>
+                <button class="btn btn-outline btn-full" id="btn-sidebar-logout" style="margin-top: 10px; height: 32px; font-size: 0.8rem; padding: 4px;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
         </aside>
 
         <!-- 2. MAIN CONTENT AREA -->
-        <main class="app-main">
+        <main class="app-main" id="app-main">
             <!-- Top Navbar Header -->
-            <header class="app-header">
+            <header class="app-header" id="app-header">
                 <div class="header-left">
                     <button class="sidebar-open-btn" id="sidebar-open-btn"><i class="fa-solid fa-bars"></i></button>
                     <div class="breadcrumbs" id="breadcrumbs">
@@ -105,10 +90,7 @@
                     </div>
                 </div>
                 <div class="header-right">
-                    <button class="theme-toggle-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                    <a href="#notifications" class="quick-notif-btn" title="View Alerts">
+                    <a href="#settings" class="quick-notif-btn" title="View Alerts & Settings">
                         <i class="fa-solid fa-bell"></i>
                         <span class="indicator hidden" id="header-notif-indicator"></span>
                     </a>
@@ -118,12 +100,75 @@
             <!-- Inner View Content Container -->
             <div class="app-view-container">
 
+                <!-- ----------------- VIEW: LOGIN / AUTH LANDING ----------------- -->
+                <section id="view-login" class="spa-view">
+                    <div class="login-wrapper">
+                        <div class="dashboard-card login-card" id="login-card">
+                            <div class="login-header">
+                                <i class="fa-solid fa-brain logo-icon-big"></i>
+                                <h2>Sign in to FuturePath.AI</h2>
+                                <p class="text-muted">Enter credentials or explore the platform instantly</p>
+                            </div>
+                            
+                            <form id="form-login">
+                                <div class="form-group">
+                                    <label for="login-email">Email Address</label>
+                                    <input type="email" id="login-email" required placeholder="name@company.com" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="login-password">Password</label>
+                                    <input type="password" id="login-password" required placeholder="••••••••" class="form-control">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full btn-large">Sign In</button>
+                            </form>
+
+                            <div class="login-divider">
+                                <span>or</span>
+                            </div>
+
+                            <button class="btn btn-secondary btn-full btn-large" id="btn-login-guest"><i class="fa-solid fa-user-secret"></i> Continue as Guest</button>
+
+                            <p class="auth-toggle-text" style="margin-top: 20px; text-align: center; font-size: 0.85rem;">
+                                Don't have an account? <a href="#" id="link-to-register">Register here</a>
+                            </p>
+                        </div>
+
+                        <div class="dashboard-card login-card hidden" id="register-card">
+                            <div class="login-header">
+                                <i class="fa-solid fa-brain logo-icon-big"></i>
+                                <h2>Create Account</h2>
+                                <p class="text-muted">Get started with AI-powered career intelligence</p>
+                            </div>
+                            
+                            <form id="form-register">
+                                <div class="form-group">
+                                    <label for="register-name">Full Name</label>
+                                    <input type="text" id="register-name" required placeholder="John Doe" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="register-email">Email Address</label>
+                                    <input type="email" id="register-email" required placeholder="name@company.com" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="register-password">Password</label>
+                                    <input type="password" id="register-password" required placeholder="Min 6 characters" class="form-control">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full btn-large">Create Account</button>
+                            </form>
+
+                            <p class="auth-toggle-text" style="margin-top: 20px; text-align: center; font-size: 0.85rem;">
+                                Already have an account? <a href="#" id="link-to-login">Login here</a>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- ----------------- VIEW: DASHBOARD ----------------- -->
                 <section id="view-dashboard" class="spa-view active">
                     <div class="welcome-banner">
                         <div class="banner-text">
                             <h1>Welcome to your Career Intelligence Dashboard</h1>
-                            <p>Optimize your resume, simulate skill acquisition, and prepare for interviews using enterprise-grade AI analytics.</p>
+                            <p>Upload your resume, simulate skill acquisition, and prepare for mock interview sessions.</p>
                         </div>
                         <button class="btn btn-primary" id="btn-dash-upload-resume"><i class="fa-solid fa-upload"></i> Upload Resume</button>
                     </div>
@@ -131,12 +176,12 @@
                     <!-- KPI Statistics Grid -->
                     <div class="kpi-grid">
                         <div class="stat-card">
-                            <div class="card-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div class="card-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
                             <div class="stat-details">
-                                <span class="stat-label">Resume ATS Score</span>
+                                <span class="stat-label">Resume ATS Match</span>
                                 <span class="stat-value" id="kpi-ats-score">N/A</span>
                             </div>
-                            <a href="#resume-optimizer" class="card-action">Optimize <i class="fa-solid fa-arrow-right"></i></a>
+                            <a href="#resume-analyzer" class="card-action">Analyze <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
                         <div class="stat-card">
                             <div class="card-icon"><i class="fa-solid fa-circle-question"></i></div>
@@ -289,73 +334,6 @@
                                 </div>
                                 
                                 <button class="btn btn-primary btn-full" id="btn-jd-roadmap" style="margin-top: 20px;">Generate Learning Path</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ----------------- VIEW: RESUME OPTIMIZER ----------------- -->
-                <section id="view-resume-optimizer" class="spa-view">
-                    <div class="section-header">
-                        <h2>AI Resume Optimizer</h2>
-                        <p>Analyze formatting, keyword density, and bullet point quality. Download customized ATS-compliant layouts.</p>
-                    </div>
-
-                    <div class="optimizer-grid">
-                        <div class="opt-left">
-                            <div class="dashboard-card">
-                                <h3>ATS Scoring Audit</h3>
-                                <div class="scoring-gauge-row">
-                                    <div class="gauge-card">
-                                        <span class="gauge-val" id="opt-ats-val">0</span>
-                                        <span class="gauge-label">ATS Score</span>
-                                    </div>
-                                    <div class="gauge-card">
-                                        <span class="gauge-val" id="opt-read-val">0</span>
-                                        <span class="gauge-label">Readability</span>
-                                    </div>
-                                    <div class="gauge-card">
-                                        <span class="gauge-val" id="opt-form-val">0</span>
-                                        <span class="gauge-label">Formatting</span>
-                                    </div>
-                                    <div class="gauge-card">
-                                        <span class="gauge-val" id="opt-key-val">0</span>
-                                        <span class="gauge-label">Keywords</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="dashboard-card">
-                                <h3>Suggested Improvements</h3>
-                                <div class="suggestions-list" id="opt-suggestions-list">
-                                    <p class="text-muted">Please upload or analyze a resume to load specific recommendations.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="opt-right">
-                            <div class="dashboard-card">
-                                <h3>One-Click ATS Resume Exporter</h3>
-                                <p class="card-desc">Generate a clean, standardized layout designed for parsing engines.</p>
-                                
-                                <div class="form-group" style="margin-top: 16px;">
-                                    <label>Select Template Style</label>
-                                    <select id="exporter-template" class="form-control">
-                                        <option value="professional">Professional (Corporate/Tech)</option>
-                                        <option value="modern">Modern (Indigo accents)</option>
-                                        <option value="minimal">Minimal (Clean black & white)</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Download Format</label>
-                                    <select id="exporter-format" class="form-control">
-                                        <option value="docx">Word Document (.docx)</option>
-                                        <option value="pdf">Portable Document Format (.pdf)</option>
-                                    </select>
-                                </div>
-
-                                <button class="btn btn-primary btn-full" id="btn-export-resume">Export Standard Resume</button>
                             </div>
                         </div>
                     </div>
@@ -570,36 +548,6 @@
                     </div>
                 </section>
 
-                <!-- ----------------- VIEW: CAREER COACH ----------------- -->
-                <section id="view-career-coach" class="spa-view">
-                    <div class="section-header">
-                        <h2>AI Career Coach Chatbot</h2>
-                        <p>Ask questions regarding salary negotiations, resume bullet points, interview strategies, and career path options.</p>
-                    </div>
-
-                    <div class="coach-layout">
-                        <!-- Chat Pane -->
-                        <div class="coach-chat-pane dashboard-card">
-                            <div class="chat-history-container" id="coach-chat-box">
-                                <div class="assistant-bubble">
-                                    <p>Hello! I am your career coach. I have loaded details from your database profile. Ask me anything about resume formatting, key missing skills, or mock coding tasks!</p>
-                                </div>
-                            </div>
-                            
-                            <div class="suggested-prompts-row" id="coach-suggested-prompts">
-                                <button class="prompt-chip" data-prompt="How can I improve my resume's bullet points?">Improve Bullet Points</button>
-                                <button class="prompt-chip" data-prompt="What skills should I learn to maximize my salary?">Highest-Paying Skills</button>
-                                <button class="prompt-chip" data-prompt="Give me tips for behavioral interviews.">Behavioral Tips</button>
-                            </div>
-
-                            <div class="chat-input-row" style="margin-top: 10px;">
-                                <input type="text" id="coach-chat-input" class="form-control" placeholder="Ask career related questions...">
-                                <button class="btn btn-primary" id="btn-coach-send">Send <i class="fa-solid fa-paper-plane"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
                 <!-- ----------------- VIEW: ROADMAP ----------------- -->
                 <section id="view-roadmap" class="spa-view">
                     <div class="section-header">
@@ -611,7 +559,7 @@
                         <div class="roadmap-meta-header dashboard-card">
                             <div>
                                 <h3 id="rm-target-job">Backend Developer</h3>
-                                <p id="rm-target-company" class="text-muted">Targeting roles at CloudScale Co</p>
+                                <p id="rm-target-company" class="text-muted">Targeting skills for role</p>
                             </div>
                             <div class="tag-cloud" id="rm-missing-skills-cloud"></div>
                         </div>
@@ -705,35 +653,37 @@
                     </div>
                 </section>
 
-                <!-- ----------------- VIEW: NOTIFICATIONS ----------------- -->
-                <section id="view-notifications" class="spa-view">
-                    <div class="section-header">
-                        <h2>Notifications & Alerts</h2>
-                        <p>Stay updated on new matching job postings and automated profile updates.</p>
-                    </div>
-
-                    <div class="dashboard-card">
-                        <div class="notifs-header-row">
-                            <h3>Alerts Feed</h3>
-                        </div>
-                        
-                        <div class="notifs-feed-container" id="notifications-feed-list">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ----------------- VIEW: SETTINGS ----------------- -->
+                <!-- ----------------- VIEW: SETTINGS (Includes Notifications, Alerts & Theme Switcher) ----------------- -->
                 <section id="view-settings" class="spa-view">
                     <div class="section-header">
-                        <h2>Settings & Preferences</h2>
-                        <p>Configure smart job match frequencies and alert filters.</p>
+                        <h2>Settings & System Controls</h2>
+                        <p>Configure account profiles, review system notification alerts, manage theme preferences, and verify database states.</p>
                     </div>
 
                     <div class="settings-grid">
-                        <div class="settings-main">
+                        <div class="settings-left-pane">
+                            <!-- 1. Profile Settings Card -->
                             <div class="dashboard-card">
-                                <h3>Job Alerts Settings</h3>
+                                <h3>Profile Details</h3>
+                                <p class="card-desc">View and manage your account credentials</p>
+                                
+                                <form id="form-profile-settings" style="margin-top: 16px;">
+                                    <div class="form-group">
+                                        <label for="profile-name">Full Name</label>
+                                        <input type="text" id="profile-name" class="form-control" placeholder="Guest User">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-email">Email Address</label>
+                                        <input type="email" id="profile-email" class="form-control" placeholder="guest@example.com">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" id="btn-save-profile">Update Profile Info</button>
+                                </form>
+                            </div>
+
+                            <!-- 2. Job Match Alerts settings -->
+                            <div class="dashboard-card" style="margin-top: 20px;">
+                                <h3>Smart Match Alerts</h3>
+                                <p class="card-desc">Customize frequency filters and dispatch channels</p>
                                 
                                 <div class="form-group" style="margin-top: 16px;">
                                     <label>Alert Frequency</label>
@@ -747,11 +697,11 @@
                                 <div class="settings-checkbox-group">
                                     <label class="checkbox-container">
                                         <input type="checkbox" id="setting-notif-email" checked>
-                                        <span>Send email alerts to guest@example.com</span>
+                                        <span>Send email alerts to address</span>
                                     </label>
                                     <label class="checkbox-container">
                                         <input type="checkbox" id="setting-notif-app" checked>
-                                        <span>Show in-app notification logs</span>
+                                        <span>Show in-app notifications feed</span>
                                     </label>
                                 </div>
 
@@ -766,69 +716,50 @@
                                     </div>
                                 </div>
 
-                                <button class="btn btn-primary" id="btn-save-settings" style="margin-top: 16px;">Save Alerts Settings</button>
+                                <button class="btn btn-primary" id="btn-save-settings">Save Alerts Settings</button>
+                            </div>
+
+                            <!-- 3. System Preferences (Theme & Diagnostics) -->
+                            <div class="dashboard-card" style="margin-top: 20px;">
+                                <h3>System & Diagnostics</h3>
+                                
+                                <div class="form-group" style="margin-top: 16px;">
+                                    <label>Theme Preference</label>
+                                    <div style="display:flex; align-items:center; justify-content:space-between; padding: 10px; background-color: var(--bg-base); border-radius: var(--radius-sm); border:1px solid var(--border);">
+                                        <span>Activate Dark Mode Theme</span>
+                                        <label class="switch-container">
+                                            <input type="checkbox" id="setting-theme-toggle">
+                                            <span class="switch-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Database Integrity Checker</label>
+                                    <button class="btn btn-secondary btn-full" id="btn-check-db"><i class="fa-solid fa-database"></i> Run Database Diagnostics</button>
+                                    <div class="db-check-results hidden" id="db-check-results" style="margin-top: 12px; padding:10px; border-radius: var(--radius-sm); font-size:0.75rem; background-color: var(--bg-base); border: 1px solid var(--border); font-family: monospace;">
+                                        Checking tables...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Notifications Feed Panel (Moves inside Settings right pane) -->
+                        <div class="settings-right-pane">
+                            <div class="dashboard-card flex-grow">
+                                <div class="card-header">
+                                    <h3>System Notifications Feed</h3>
+                                    <span class="count-badge" id="settings-notif-badge">0 Alerts</span>
+                                </div>
+                                <div class="notifs-feed-container" id="notifications-feed-list" style="margin-top: 16px; max-height: 500px; overflow-y: auto;">
+                                    <p class="text-muted">No alerts synced yet.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- ----------------- VIEW: ABOUT ME ----------------- -->
-                <section id="view-about-me" class="spa-view">
-                    <div class="section-header">
-                        <h2>About Me</h2>
-                        <p>Recruiter-facing developer portfolio presenting technical credentials and project milestones.</p>
-                    </div>
-
-                    <div class="about-me-layout">
-                        <div class="about-card-left">
-                            <div class="dashboard-card text-center">
-                                <div class="profile-avatar-big"><i class="fa-solid fa-user-gear"></i></div>
-                                <h2 style="margin-top: 16px;">Guest Candidate</h2>
-                                <p class="text-muted">Software Engineer / AI Enthusiast</p>
-                                
-                                <div class="profile-links-row">
-                                    <a href="#" class="btn btn-secondary btn-full"><i class="fa-brands fa-github"></i> GitHub</a>
-                                    <a href="#" class="btn btn-secondary btn-full"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="about-card-right">
-                            <div class="dashboard-card">
-                                <h3>Professional Summary</h3>
-                                <p style="margin-top: 10px;">Enthusiastic and results-driven Software Engineer with hands-on experience designing and building RESTful microservices, optimizing database transactions, and implementing local natural language processing (NLP) models. Experienced in writing clean code and automating delivery container configurations.</p>
-                                
-                                <div class="divider"></div>
-                                
-                                <h3>Technical Core Skills</h3>
-                                <div class="tag-cloud" style="margin-top: 10px;">
-                                    <span class="tag">Python (FastAPI, Flask)</span>
-                                    <span class="tag">JavaScript / React</span>
-                                    <span class="tag">PostgreSQL / SQL</span>
-                                    <span class="tag">Docker Containerization</span>
-                                    <span class="tag">RESTful APIs</span>
-                                    <span class="tag">Machine Learning Fundamentals</span>
-                                </div>
-
-                                <div class="divider"></div>
-
-                                <h3>Education & Certifications</h3>
-                                <ul class="timeline-bullet-list" style="margin-top: 10px;">
-                                    <li>
-                                        <strong>Bachelor of Science in Computer Science</strong>
-                                        <p class="text-muted">State University | Graduated 2024</p>
-                                    </li>
-                                    <li>
-                                        <strong>FastAPI Developer Professional Certificate</strong>
-                                        <p class="text-muted">Online Academy | 2025</p>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ----------------- VIEW: FILE UPLOAD MODAL/VIEW ----------------- -->
+                <!-- ----------------- VIEW: FILE UPLOAD ----------------- -->
                 <section id="view-upload" class="spa-view">
                     <div class="back-link-wrapper">
                         <a href="#dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
@@ -872,17 +803,17 @@
             <i class="fa-solid fa-briefcase"></i>
             <span>Jobs</span>
         </a>
-        <a href="#resume-optimizer" class="mobile-nav-item" data-view="resume-optimizer">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Optimize</span>
+        <a href="#resume-analyzer" class="mobile-nav-item" data-view="resume-analyzer">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <span>Analyzer</span>
         </a>
-        <a href="#career-coach" class="mobile-nav-item" data-view="career-coach">
-            <i class="fa-solid fa-user-tie"></i>
-            <span>Coach</span>
+        <a href="#settings" class="mobile-nav-item" data-view="settings">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
         </a>
     </nav>
 
     <!-- Main JavaScript Logic -->
-    <script src="assets/js/app.js?v=1.0.2"></script>
+    <script src="assets/js/app.js?v=1.0.3"></script>
 </body>
 </html>

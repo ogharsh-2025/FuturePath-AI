@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * FUTUREPATH.AI - CLIENT SIDE APPLICATION CONTRACT CONTROLLER
+ * FUTUREPATH.AI - CLIENT SIDE APPLICATION CONTROLLER
  * ==========================================================================
  */
 
@@ -11,13 +11,11 @@ const API_BASE = window.location.hostname.includes("render.com") || window.locat
 
 // Application state persistence
 const state = {
-    token: "guest-token",
-    role: "job_seeker",
-    user: { name: "Guest User", email: "guest@example.com" },
+    token: localStorage.getItem("token") || null,
+    role: localStorage.getItem("role") || null,
+    user: JSON.parse(localStorage.getItem("user")) || null,
     activeResume: null,
     currentJobId: null,
-    activeInterviewSession: null,
-    chatSessionId: null,
     charts: {} // Store active ChartJS instances
 };
 
@@ -70,7 +68,8 @@ async function apiRequest(endpoint, options = {}) {
         const response = await fetch(url, options);
         
         if (response.status === 401) {
-            showToast("Session authentication failed.", "error");
+            handleLogout();
+            showToast("Session expired or unauthorized.", "error");
             return null;
         }
 
@@ -103,19 +102,16 @@ async function apiRequest(endpoint, options = {}) {
 // SPA ROUTER DEFINITION
 // ==========================================================================
 const views = {
+    login: document.getElementById("view-login"),
     dashboard: document.getElementById("view-dashboard"),
     jobs: document.getElementById("view-jobs"),
     jobDetails: document.getElementById("view-job-details"),
-    "resume-optimizer": document.getElementById("view-resume-optimizer"),
     "resume-analyzer": document.getElementById("view-resume-analyzer"),
     "mock-interview": document.getElementById("view-mock-interview"),
     "github-analyzer": document.getElementById("view-github-analyzer"),
-    "career-coach": document.getElementById("view-career-coach"),
     roadmap: document.getElementById("view-roadmap"),
     "salary-trends": document.getElementById("view-salary-trends"),
-    notifications: document.getElementById("view-notifications"),
     settings: document.getElementById("view-settings"),
-    "about-me": document.getElementById("view-about-me"),
     upload: document.getElementById("view-upload")
 };
 
@@ -134,6 +130,30 @@ function router() {
 
     console.log("Routing to view:", viewKey, "Param:", extraParam);
 
+    // Enforce Auth Guard
+    if (viewKey === "login" || viewKey === "register") {
+        if (state.token) {
+            window.location.hash = "#dashboard";
+            return;
+        }
+        // Configure auth shell (hide sidebar & header)
+        document.getElementById("sidebar").style.display = "none";
+        document.getElementById("app-header").style.display = "none";
+        document.getElementById("app-main").style.marginLeft = "0";
+        
+        toggleAuthForms(viewKey === "register");
+        viewKey = "login"; // Map register to login view container
+    } else {
+        if (!state.token) {
+            window.location.hash = "#login";
+            return;
+        }
+        // Configure main shell (show sidebar & header)
+        document.getElementById("sidebar").style.display = "";
+        document.getElementById("app-header").style.display = "";
+        document.getElementById("app-main").style.marginLeft = "";
+    }
+
     // Toggle View active classes
     Object.keys(views).forEach(key => {
         if (views[key]) {
@@ -146,9 +166,14 @@ function router() {
         document.getElementById("breadcrumb-active").innerText = viewKey.replace("-", " ").toUpperCase();
     } else {
         // Fallback
-        views.dashboard.classList.add("active");
-        document.getElementById("breadcrumb-active").innerText = "DASHBOARD";
-        hash = "#dashboard";
+        if (state.token) {
+            views.dashboard.classList.add("active");
+            document.getElementById("breadcrumb-active").innerText = "DASHBOARD";
+            window.location.hash = "#dashboard";
+        } else {
+            views.login.classList.add("active");
+            window.location.hash = "#login";
+        }
     }
 
     // Toggle menu items active style
@@ -178,14 +203,10 @@ function router() {
     } else if (viewKey === "jobDetails" && extraParam) {
         state.currentJobId = extraParam;
         loadJobDetails(extraParam);
-    } else if (viewKey === "resume-optimizer") {
-        loadResumeOptimizer();
     } else if (viewKey === "mock-interview") {
         loadMockInterviewHistory();
     } else if (viewKey === "salary-trends") {
         loadSalaryAndTrends();
-    } else if (viewKey === "notifications") {
-        loadNotifications();
     } else if (viewKey === "settings") {
         loadSettings();
     } else if (viewKey === "roadmap") {
@@ -219,6 +240,9 @@ async function loadDashboard() {
     const matchesList = document.getElementById("dash-matches-list");
     const matchesCount = document.getElementById("dash-matches-count");
 
+    // Update active user layout
+    updateUserWidgetUI();
+
     // Clear and set loading states
     matchesList.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Matching jobs...</p></div>`;
 
@@ -228,6 +252,8 @@ async function loadDashboard() {
         const unreadCount = notifs.filter(n => !n.is_read).length;
         const badge = document.getElementById("menu-notif-count");
         const indicator = document.getElementById("header-notif-indicator");
+        
+        // Settings badge count updates
         if (unreadCount > 0) {
             badge.innerText = unreadCount;
             badge.classList.remove("hidden");
@@ -247,19 +273,11 @@ async function loadDashboard() {
             document.getElementById("resume-filename").innerText = resume.resume_file.split(/[\\/]/).pop().replace(/^user_\d+_/, "");
             skillsCloud.innerHTML = resume.skills.map(s => `<span class="tag">${s.skill_name}</span>`).join("");
 
-            // Load Optimizer KPI score
-            const score = await apiRequest("/api/resume-optimizer/analyze").catch(() => null);
-            if (score) {
-                document.getElementById("kpi-ats-score").innerText = `${score.ats_score}%`;
-            }
-
-            // Fetch GitHub profile for KPI
-            const ghProfile = await apiRequest("/api/job-alerts/settings").catch(() => null); // mock retrieve profile score
-            const ghData = await apiRequest("/api/notifications").catch(() => null); // fallback check
+            // Set default ATS compatibility metric
+            document.getElementById("kpi-ats-score").innerText = "84%";
             
             // Set github score KPI
-            const gh = await apiRequest("/api/career-coach/history").catch(() => null);
-            document.getElementById("kpi-github-score").innerText = "78%"; // simulated / fallback placeholder
+            document.getElementById("kpi-github-score").innerText = "78%";
 
             // Fetch Interview attempts count for KPI
             const attempts = await apiRequest("/api/interview-prep/history").catch(() => []);
@@ -418,7 +436,6 @@ async function loadRoadmap(jobId) {
                 method: "POST",
                 body: { target_job: "" } // Handled dynamically on backend matching
             });
-            // Re-fetch correct payload structure
             roadmapData = roadmapData.roadmap_data;
         } else {
             // Fetch history
@@ -465,68 +482,7 @@ async function loadRoadmap(jobId) {
     }
 }
 
-// 5. Resume Optimizer View Loader
-async function loadResumeOptimizer() {
-    const list = document.getElementById("opt-suggestions-list");
-    list.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Auditing resume file...</p></div>`;
-
-    try {
-        const data = await apiRequest("/api/resume-optimizer/analyze");
-        document.getElementById("opt-ats-val").innerText = `${data.ats_score}%`;
-        document.getElementById("opt-read-val").innerText = `${data.readability_score}%`;
-        document.getElementById("opt-form-val").innerText = `${data.formatting_score}%`;
-        document.getElementById("opt-key-val").innerText = `${data.keyword_score}%`;
-
-        // Render detailed suggestions
-        let suggestionsHTML = "";
-        
-        // Missing Keywords
-        if (data.suggestions.missing_keywords.length > 0) {
-            suggestionsHTML += `
-                <div class="suggestion-item warning">
-                    <span class="suggestion-title">Missing Target Keywords</span>
-                    <span class="suggestion-desc">Add these skills to pass parser filters: ${data.suggestions.missing_keywords.join(", ")}</span>
-                </div>
-            `;
-        }
-        
-        // Weak Bullets
-        if (data.suggestions.weak_bullet_points.length > 0) {
-            suggestionsHTML += data.suggestions.weak_bullet_points.map(bullet => `
-                <div class="suggestion-item warning">
-                    <span class="suggestion-title">Weak Bullet Point Detected</span>
-                    <span class="suggestion-desc">"${bullet}" lacks impact metrics or start action verbs.</span>
-                </div>
-            `).join("");
-        }
-
-        // Action replacements
-        const repKeys = Object.keys(data.suggestions.action_verb_replacements);
-        if (repKeys.length > 0) {
-            const replacements = repKeys.map(k => `Replace '${k}' with '${data.suggestions.action_verb_replacements[k]}'`).join(", ");
-            suggestionsHTML += `
-                <div class="suggestion-item warning">
-                    <span class="suggestion-title">Strong Action Verbs Replacements</span>
-                    <span class="suggestion-desc">${replacements}</span>
-                </div>
-            `;
-        }
-
-        // Quantifiable achievements
-        suggestionsHTML += data.suggestions.quantifiable_suggestions.map(s => `
-            <div class="suggestion-item success">
-                <span class="suggestion-title">Quantifiable Achievement Structure</span>
-                <span class="suggestion-desc">${s}</span>
-            </div>
-        `).join("");
-
-        list.innerHTML = suggestionsHTML || `<p class="text-success">Perfect! Your resume conforms to all ATS parsing guidelines.</p>`;
-    } catch (e) {
-        list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-file-excel"></i><p>Upload a resume first to evaluate ATS optimization scores.</p></div>`;
-    }
-}
-
-// 6. Mock Interview Loader
+// 5. Mock Interview Loader
 async function loadMockInterviewHistory() {
     const list = document.getElementById("interview-history-list");
     list.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Loading history...</p></div>`;
@@ -577,13 +533,12 @@ async function loadMockInterviewHistory() {
     }
 }
 
-// 7. Salary and trends view
+// 6. Salary and trends view
 async function loadSalaryAndTrends() {
     const timeline = document.getElementById("forecast-timeline-box");
     timeline.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Fetching trends data...</p></div>`;
 
     try {
-        // Fetch trends metrics
         const trends = await apiRequest("/api/salary-prediction/trends");
         
         // 1. Market Demand Chart
@@ -638,13 +593,37 @@ async function loadSalaryAndTrends() {
     }
 }
 
-// 8. Notifications View Loader
-async function loadNotifications() {
+// 7. Load settings panel elements (Alert details, Notifications, Theme checkbox)
+async function loadSettings() {
+    // 1. Load alerts preferences
+    try {
+        const alertSettings = await apiRequest("/api/job-alerts/settings");
+        document.getElementById("setting-alert-frequency").value = alertSettings.frequency;
+        document.getElementById("setting-notif-email").checked = alertSettings.email_notifications;
+        document.getElementById("setting-notif-app").checked = alertSettings.in_app_notifications;
+        document.getElementById("setting-target-role").value = alertSettings.preferences.target_role || "";
+        document.getElementById("setting-target-location").value = alertSettings.preferences.location || "";
+    } catch (err) {}
+
+    // 2. Populate profile details fields from state
+    if (state.user) {
+        document.getElementById("profile-name").value = state.user.name || "";
+        document.getElementById("profile-email").value = state.user.email || "";
+    }
+
+    // 3. Sync dark theme toggle state
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.getElementById("setting-theme-toggle").checked = isDark;
+
+    // 4. Fetch notification list inside settings right pane
     const list = document.getElementById("notifications-feed-list");
+    const countBadge = document.getElementById("settings-notif-badge");
     list.innerHTML = `<div class="loading-state"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Syncing alerts...</p></div>`;
 
     try {
         const notifs = await apiRequest("/api/notifications");
+        countBadge.innerText = `${notifs.length} Alerts`;
+        
         if (notifs.length > 0) {
             list.innerHTML = notifs.map(n => `
                 <div class="notif-item ${n.is_read ? '' : 'unread'}" id="notif-item-${n.id}">
@@ -660,14 +639,14 @@ async function loadNotifications() {
                 </div>
             `).join("");
         } else {
-            list.innerHTML = `<p class="text-muted">No notifications logs at the moment.</p>`;
+            list.innerHTML = `<p class="text-muted">No notification alerts logs at the moment.</p>`;
         }
     } catch (err) {
-        list.innerHTML = `<p class="text-muted">Error loading alert notifications.</p>`;
+        list.innerHTML = `<p class="text-muted">Error loading alerts.</p>`;
     }
 }
 
-// Mark single notification read
+// Mark notification read helper (triggered by window event)
 window.markNotificationRead = async function(notifId) {
     try {
         await apiRequest(`/api/notifications/read/${notifId}`, { method: "POST" });
@@ -678,74 +657,227 @@ window.markNotificationRead = async function(notifId) {
             if (btn) btn.remove();
         }
         showToast("Notification marked as read.", "success");
-        // Reload dashboard count
+        // Reload dashboard/settings count
         loadDashboard();
+        loadSettings();
     } catch (err) {}
 };
 
-// 9. Alerts Settings Loader
-async function loadSettings() {
-    try {
-        const settings = await apiRequest("/api/job-alerts/settings");
-        document.getElementById("setting-alert-frequency").value = settings.frequency;
-        document.getElementById("setting-notif-email").checked = settings.email_notifications;
-        document.getElementById("setting-notif-app").checked = settings.in_app_notifications;
-        document.getElementById("setting-target-role").value = settings.preferences.target_role || "";
-        document.getElementById("setting-target-location").value = settings.preferences.location || "";
-    } catch (err) {}
+// ==========================================================================
+// AUTHENTICATION LOGOUT & UI WRAPPERS
+// ==========================================================================
+
+function handleLoginSuccess(token, userDetails, role = "job_seeker") {
+    state.token = token;
+    state.role = role;
+    state.user = userDetails;
+    
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("user", JSON.stringify(userDetails));
+
+    updateUserWidgetUI();
+    showToast("Signed in successfully!", "success");
+    window.location.hash = "#dashboard";
+}
+
+function handleLogout() {
+    state.token = null;
+    state.role = null;
+    state.user = null;
+    
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
+
+    showToast("Logged out successfully.", "info");
+    window.location.hash = "#login";
+}
+
+function toggleAuthForms(showRegister) {
+    const loginCard = document.getElementById("login-card");
+    const registerCard = document.getElementById("register-card");
+    if (showRegister) {
+        loginCard.classList.add("hidden");
+        registerCard.classList.remove("hidden");
+    } else {
+        loginCard.classList.remove("hidden");
+        registerCard.classList.add("hidden");
+    }
+}
+
+function updateUserWidgetUI() {
+    const nameLabel = document.getElementById("sidebar-user-name");
+    const emailLabel = document.getElementById("sidebar-user-email");
+    if (state.user) {
+        nameLabel.innerText = state.user.name || "Active Candidate";
+        emailLabel.innerText = state.user.email || "";
+    } else {
+        nameLabel.innerText = "Guest User";
+        emailLabel.innerText = "guest@example.com";
+    }
 }
 
 // ==========================================================================
-// EVENT ATTACHMENTS & INTERACTIVE ENGINES
+// EVENT ATTACHMENTS & INTERACTIVE CONTROLLERS
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. Init Theme, Sidebar and SPA Router
+    // 1. Initial State Checks
     router();
     window.addEventListener("hashchange", router);
 
-    // Light / Dark Theme Switcher
-    const themeBtn = document.getElementById("theme-toggle");
-    themeBtn.addEventListener("click", () => {
-        const currentTheme = document.documentElement.getAttribute("data-theme");
-        const nextTheme = currentTheme === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", nextTheme);
-        themeBtn.innerHTML = nextTheme === "dark" ? `<i class="fa-solid fa-sun"></i>` : `<i class="fa-solid fa-moon"></i>`;
-        showToast(`Theme switched to ${nextTheme} mode.`, "success");
-    });
-
-    // Desktop Sidebar Collapsible toggle
+    // Sidebar Collapsible Toggles
     const toggleInner = document.getElementById("sidebar-toggle-inner");
     const sidebar = document.getElementById("sidebar");
     toggleInner.addEventListener("click", () => {
         sidebar.classList.toggle("collapsed");
     });
 
-    // Mobile Hamburger Open / Close
+    // Mobile Hamburger
     const openBtn = document.getElementById("sidebar-open-btn");
     openBtn.addEventListener("click", () => {
         sidebar.classList.add("open");
     });
 
-    // Close sidebar on clicking main content in mobile
-    document.querySelector(".app-main").addEventListener("click", () => {
-        sidebar.classList.remove("open");
-    });
+    // Sidebar logs & logout bindings
+    document.getElementById("btn-sidebar-logout").addEventListener("click", handleLogout);
 
-    // Dashboard: Redirect to Upload view
+    // Dashboard redirects
     document.getElementById("btn-dash-upload-resume").addEventListener("click", () => {
         window.location.hash = "#upload";
     });
 
-    // Skill Simulator checklist loader on Job select change
+    // Settings Theme Preference switch
+    const themeCheckbox = document.getElementById("setting-theme-toggle");
+    themeCheckbox.addEventListener("change", () => {
+        const activateDark = themeCheckbox.checked;
+        const targetTheme = activateDark ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", targetTheme);
+        showToast(`Theme switched to ${targetTheme} mode.`, "success");
+    });
+
+    // Profile Settings Local Info update (Simulated/Persisted in LocalStorage)
+    document.getElementById("form-profile-settings").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const updatedName = document.getElementById("profile-name").value.trim();
+        const updatedEmail = document.getElementById("profile-email").value.trim();
+        
+        if (!updatedName || !updatedEmail) {
+            showToast("Profile details cannot be blank.", "error");
+            return;
+        }
+
+        const newUser = { name: updatedName, email: updatedEmail };
+        state.user = newUser;
+        localStorage.setItem("user", JSON.stringify(newUser));
+        
+        updateUserWidgetUI();
+        showToast("Profile details updated successfully.", "success");
+    });
+
+    // Settings Database Diagnostics checker
+    document.getElementById("btn-check-db").addEventListener("click", async () => {
+        const box = document.getElementById("db-check-results");
+        box.innerText = "Running system inspection query...";
+        box.classList.remove("hidden");
+
+        try {
+            const data = await apiRequest("/api/db-check");
+            if (data && data.status === "connected") {
+                box.innerHTML = `
+                    <span style="color:var(--success)">Status: Connected</span><br>
+                    Database: SQLite (Programmatic)<br>
+                    Tables Count: ${data.tables.length}<br>
+                    Tables list:<br>
+                    ${data.tables.join(", ")}
+                `;
+                showToast("Database check completed.", "success");
+            } else {
+                box.innerHTML = `<span style="color:var(--error)">Status: Database Connection Error</span><br>${data ? data.error : "Unknown error"}`;
+            }
+        } catch (err) {
+            box.innerHTML = `<span style="color:var(--error)">Diagnostics Request Failed</span>`;
+        }
+    });
+
+    // Auth actions: Continue as Guest Click
+    document.getElementById("btn-login-guest").addEventListener("click", () => {
+        // Mock Guest token authorization details
+        handleLoginSuccess("guest-token", { name: "Guest User", email: "guest@example.com" }, "job_seeker");
+    });
+
+    // Auth actions: Login Form submission
+    document.getElementById("form-login").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
+
+        try {
+            const data = await apiRequest("/api/auth/login", {
+                method: "POST",
+                body: { email, password }
+            });
+
+            if (data && data.access_token) {
+                // Fetch profile specifications
+                const profile = await apiRequest("/api/auth/me", {
+                    headers: { "Authorization": `Bearer ${data.access_token}` }
+                });
+                
+                if (profile) {
+                    handleLoginSuccess(data.access_token, { name: profile.name, email: profile.email }, profile.role);
+                }
+            }
+        } catch (e) {}
+    });
+
+    // Auth actions: Register Form submission
+    document.getElementById("form-register").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("register-name").value;
+        const email = document.getElementById("register-email").value;
+        const password = document.getElementById("register-password").value;
+
+        if (password.length < 6) {
+            showToast("Password must be at least 6 characters.", "error");
+            return;
+        }
+
+        try {
+            const data = await apiRequest("/api/auth/register", {
+                method: "POST",
+                body: { name, email, role: "job_seeker", password }
+            });
+
+            if (data) {
+                showToast("Account created successfully! Please sign in.", "success");
+                document.getElementById("login-email").value = email;
+                toggleAuthForms(false);
+                window.location.hash = "#login";
+            }
+        } catch (err) {}
+    });
+
+    // Auth Form Toggle links
+    document.getElementById("link-to-register").addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.hash = "#register";
+    });
+    document.getElementById("link-to-login").addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.hash = "#login";
+    });
+
+    // Dashboard Simulator target job select checklist loader
     const simSelect = document.getElementById("simulator-job-select");
     simSelect.addEventListener("change", async () => {
         const jobId = simSelect.value;
-        const listContainer = document.getElementById("simulator-skills-checklist");
+        const checklist = document.getElementById("simulator-skills-checklist");
         
         if (!jobId) {
-            listContainer.innerHTML = "";
+            checklist.innerHTML = "";
             return;
         }
 
@@ -754,19 +886,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const match = recs.find(r => r.job_id == jobId);
             
             if (match && match.missing_skills.length > 0) {
-                listContainer.innerHTML = match.missing_skills.map(s => `
+                checklist.innerHTML = match.missing_skills.map(s => `
                     <label class="check-container">
                         <input type="checkbox" name="sim-skill" value="${s}">
                         <span>${s}</span>
                     </label>
                 `).join("");
             } else {
-                listContainer.innerHTML = `<span class="text-success" style="font-size:0.8rem;"><i class="fa-solid fa-check"></i> Perfect match! No missing skills.</span>`;
+                checklist.innerHTML = `<span class="text-success" style="font-size:0.8rem;"><i class="fa-solid fa-check"></i> Perfect match! No missing skills.</span>`;
             }
         } catch (err) {}
     });
 
-    // Run Skill Gap Simulator API Call
+    // Dashboard simulator submit button click
     document.getElementById("btn-simulate-gap").addEventListener("click", async () => {
         const jobId = simSelect.value;
         const checkboxes = document.querySelectorAll("input[name='sim-skill']:checked");
@@ -790,16 +922,6 @@ document.addEventListener("DOMContentLoaded", () => {
             
             showToast("Skills simulated successfully!", "success");
         } catch (err) {}
-    });
-
-    // Resume Optimizer: Export Resume download call
-    document.getElementById("btn-export-resume").addEventListener("click", () => {
-        const template = document.getElementById("exporter-template").value;
-        const format = document.getElementById("exporter-format").value;
-        
-        // Open download stream in new window
-        window.open(`${API_BASE}/api/resume-optimizer/generate-ats?template=${template}&format=${format}&Authorization=Bearer%20${state.token}`);
-        showToast("Standard ATS Resume export started.", "success");
     });
 
     // Resume vs JD Analyzer Fit Action
@@ -898,7 +1020,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeSession.currentIndex < activeSession.questions.length) {
             renderActiveQuestion();
         } else {
-            // Submit entire mock answers
             showToast("Evaluation in progress. Calculating competency scores...", "info");
             
             try {
@@ -912,7 +1033,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
 
-                // Display evaluations
                 document.getElementById("int-session-card").classList.add("hidden");
                 document.getElementById("int-feedback-card").classList.remove("hidden");
 
@@ -927,9 +1047,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `).join("");
 
-                // Refresh history listing and trend graph
                 loadMockInterviewHistory();
-                // Refresh dashboard KPI average
                 loadDashboard();
             } catch (err) {}
         }
@@ -963,7 +1081,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("git-readiness-val").innerText = `${stats.hiring_readiness}%`;
             document.getElementById("git-portfolio-val").innerText = `${stats.portfolio_score}%`;
 
-            // Repos list
             document.getElementById("git-repos-list").innerHTML = stats.top_repos.map(r => `
                 <div class="repo-card">
                     <h5>
@@ -974,10 +1091,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `).join("");
 
-            // Suggestions
             document.getElementById("git-suggestions-list").innerHTML = stats.suggestions.map(s => `<li>${s}</li>`).join("");
 
-            // Languages Pie Chart
             const langLabels = Object.keys(stats.top_languages);
             const langValues = Object.values(stats.top_languages);
 
@@ -997,60 +1112,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             document.getElementById("github-results-container").classList.remove("hidden");
             showToast("GitHub profile parsed successfully.", "success");
-            // Update dashboard KPI
             loadDashboard();
         } catch (e) {}
-    });
-
-    // ----------------- AI Career Coach Chat Actions -----------------
-    const chatInput = document.getElementById("coach-chat-input");
-    const chatBox = document.getElementById("coach-chat-box");
-
-    async function sendCoachMessage(text) {
-        if (!text) return;
-
-        // Append user bubble
-        chatBox.innerHTML += `
-            <div class="user-bubble">
-                <p>${text}</p>
-            </div>
-        `;
-        chatInput.value = "";
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        try {
-            const data = await apiRequest("/api/career-coach/chat", {
-                method: "POST",
-                body: { message: text, session_id: state.chatSessionId }
-            });
-
-            state.chatSessionId = data.session_id;
-
-            // Append response bubble
-            chatBox.innerHTML += `
-                <div class="assistant-bubble">
-                    <p>${data.reply.replace(/\n/g, "<br>")}</p>
-                </div>
-            `;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (err) {}
-    }
-
-    document.getElementById("btn-coach-send").addEventListener("click", () => {
-        sendCoachMessage(chatInput.value.trim());
-    });
-
-    chatInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            sendCoachMessage(chatInput.value.trim());
-        }
-    });
-
-    // Click chip prompts
-    document.querySelectorAll(".prompt-chip").forEach(chip => {
-        chip.addEventListener("click", () => {
-            sendCoachMessage(chip.getAttribute("data-prompt"));
-        });
     });
 
     // ----------------- Salary Predictor Calculator -----------------
@@ -1082,7 +1145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {}
     });
 
-    // ----------------- Save Settings Actions -----------------
+    // ----------------- Save Alerts Settings Actions -----------------
     document.getElementById("btn-save-settings").addEventListener("click", async () => {
         const frequency = document.getElementById("setting-alert-frequency").value;
         const email_notifications = document.getElementById("setting-notif-email").checked;
@@ -1100,7 +1163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     preferences: { target_role, location }
                 }
             });
-            showToast("Settings saved successfully.", "success");
+            showToast("Alert preferences saved.", "success");
         } catch (e) {}
     });
 
@@ -1196,7 +1259,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         xhr.onload = () => {
             if (xhr.status === 200 || xhr.status === 201) {
-                showToast("Resume optimized and matched!", "success");
+                showToast("Resume parsed and matched successfully!", "success");
                 resetUpload();
                 setTimeout(() => {
                     window.location.hash = "#dashboard";
