@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 class EmbeddingEngine:
@@ -7,8 +8,14 @@ class EmbeddingEngine:
     def get_model(cls):
         """
         Lazily loads and caches the SentenceTransformer model.
-        Falls back to mock mode if PyTorch/transformers DLL loads fail on host.
+        Falls back to mock mode if PyTorch/transformers DLL loads fail on host,
+        or if running on Render (to prevent Out-Of-Memory kills on free-tier RAM).
         """
+        if os.environ.get("RENDER") == "true" or os.environ.get("FORCE_MOCK_EMBEDDING") == "true":
+            print("\n[AI Core]: Render environment detected. Bypassing heavy ML models to prevent RAM OOM kills.\n")
+            cls._model = "MOCK_FALLBACK"
+            return cls._model
+
         if cls._model is None:
             try:
                 # pyrefly: ignore [missing-import]
