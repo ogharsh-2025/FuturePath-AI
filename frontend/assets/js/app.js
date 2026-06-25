@@ -13,7 +13,7 @@ const API_BASE = window.location.hostname.includes("render.com") || window.locat
 // Global State
 const state = {
     token: "guest-token",
-    role: "recruiter", // allow access to both recruiter portal and candidate dashboard
+    role: "job_seeker",
     user: { name: "Guest User", email: "guest@example.com" },
     currentJobId: null
 };
@@ -115,7 +115,6 @@ const views = {
     home: document.getElementById("view-home"),
     auth: document.getElementById("view-auth"),
     dashboard: document.getElementById("view-dashboard"),
-    recruiter: document.getElementById("view-recruiter"),
     upload: document.getElementById("view-upload"),
     jobDetails: document.getElementById("view-job-details"),
     roadmap: document.getElementById("view-roadmap")
@@ -148,12 +147,7 @@ function router() {
         document.getElementById("nav-dashboard").classList.add("active");
         loadDashboardData();
     } 
-    else if (hash === "#recruiter") {
-        if (!checkAuth() || !checkRole("recruiter")) return;
-        views.recruiter.classList.add("active");
-        document.getElementById("nav-recruiter").classList.add("active");
-        loadRecruiterData();
-    } 
+
     else if (hash === "#upload") {
         if (!checkAuth()) return;
         views.upload.classList.add("active");
@@ -208,7 +202,6 @@ function updateNavUI() {
     // Always show all navigation links
     document.querySelectorAll(".auth-required").forEach(el => el.classList.remove("hidden"));
     document.getElementById("nav-dashboard").classList.remove("hidden");
-    document.getElementById("nav-recruiter").classList.remove("hidden");
     document.getElementById("nav-upload").classList.remove("hidden");
 }
 
@@ -235,11 +228,7 @@ function handleLoginSuccess(token, role) {
     updateNavUI();
     showToast("Signed in successfully!", "success");
     
-    if (role === "recruiter") {
-        window.location.hash = "#recruiter";
-    } else {
-        window.location.hash = "#dashboard";
-    }
+    window.location.hash = "#dashboard";
 }
 
 // Log out
@@ -514,99 +503,7 @@ async function loadRoadmap(jobId) {
     }
 }
 
-// --- Recruiter Dashboard loading ---
-async function loadRecruiterData() {
-    const jobsContainer = document.getElementById("recruiter-jobs-container");
-    jobsContainer.innerHTML = '<p class="color-text-muted">Loading posted jobs...</p>';
-    
-    try {
-        const jobs = await apiRequest("/api/jobs/");
-        
-        if (jobs && jobs.length > 0) {
-            jobsContainer.innerHTML = jobs.map(job => `
-                <div class="glass-card recruiter-job-card" id="rec-job-${job.id}">
-                    <div>
-                        <h3>${job.title}</h3>
-                        <div class="company-meta">${job.location} | ${job.salary || "Not Specified"}</div>
-                    </div>
-                    <div class="job-actions">
-                        <button class="btn btn-secondary btn-edit-job" data-id="${job.id}"><i class="fa-solid fa-pencil"></i></button>
-                        <button class="btn btn-outline btn-delete-job" data-id="${job.id}"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                </div>
-            `).join("");
-            
-            // Bind edit/delete handlers
-            document.querySelectorAll(".btn-edit-job").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    const jobId = btn.getAttribute("data-id");
-                    editJobForm(jobId);
-                });
-            });
 
-            document.querySelectorAll(".btn-delete-job").forEach(btn => {
-                btn.addEventListener("click", async (e) => {
-                    const jobId = btn.getAttribute("data-id");
-                    if (confirm("Are you sure you want to delete this job posting?")) {
-                        await deleteJobPosting(jobId);
-                    }
-                });
-            });
-
-        } else {
-            jobsContainer.innerHTML = `
-                <div class="no-resume-state">
-                    <i class="fa-solid fa-folder-open icon-warning" style="font-size:2.5rem;"></i>
-                    <p>No job postings created yet. Use the form on the left to add one.</p>
-                </div>
-            `;
-        }
-    } catch (e) {
-        jobsContainer.innerHTML = '<p class="color-text-muted">Failed to load postings.</p>';
-    }
-}
-
-// Edit active job
-async function editJobForm(jobId) {
-    try {
-        const job = await apiRequest(`/api/jobs/${jobId}`);
-        if (!job) return;
-        
-        document.getElementById("job-id-field").value = job.id;
-        document.getElementById("job-title").value = job.title;
-        document.getElementById("job-company").value = job.company;
-        document.getElementById("job-location").value = job.location;
-        document.getElementById("job-salary").value = job.salary || "";
-        document.getElementById("job-description").value = job.description;
-        
-        document.getElementById("recruiter-form-title").innerText = "Edit Job Details";
-        document.getElementById("btn-submit-job").innerText = "Save Changes";
-        document.getElementById("btn-cancel-job").classList.remove("hidden");
-    } catch (e) {
-        showToast("Could not load job details for editing", "error");
-    }
-}
-
-// Delete job posting
-async function deleteJobPosting(jobId) {
-    try {
-        const success = await apiRequest(`/api/jobs/${jobId}`, { method: "DELETE" });
-        if (success) {
-            showToast("Job posting deleted.", "success");
-            loadRecruiterData();
-        }
-    } catch (e) {
-        showToast("Failed to delete posting.", "error");
-    }
-}
-
-function resetJobForm() {
-    document.getElementById("job-id-field").value = "";
-    document.getElementById("form-job-post").reset();
-    document.getElementById("recruiter-form-title").innerText = "Post New Job Opening";
-    document.getElementById("btn-submit-job").innerText = "Post Opening";
-    document.getElementById("btn-cancel-job").classList.add("hidden");
-}
 
 // ==========================================================================
 // FILE UPLOAD ENGINE WITH DYNAMIC PROGRESS CALLBACKS
@@ -767,7 +664,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const name = document.getElementById("register-name").value;
         const email = document.getElementById("register-email").value;
-        const role = document.getElementById("register-role").value;
+        const role = "job_seeker";
         const password = document.getElementById("register-password").value;
         
         if (password.length < 6) {
@@ -800,43 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.hash = "#login";
     });
 
-    // --- Recruiter Job Creation ---
-    document.getElementById("form-job-post").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const id = document.getElementById("job-id-field").value;
-        const title = document.getElementById("job-title").value;
-        const company = document.getElementById("job-company").value;
-        const location = document.getElementById("job-location").value;
-        const salary = document.getElementById("job-salary").value;
-        const description = document.getElementById("job-description").value;
-        
-        const jobData = { title, company, location, salary, description };
-        
-        try {
-            let data;
-            if (id) {
-                // Update
-                data = await apiRequest(`/api/jobs/${id}`, {
-                    method: "PUT",
-                    body: jobData
-                });
-                showToast("Job posting updated successfully!", "success");
-            } else {
-                // Create
-                data = await apiRequest("/api/jobs/", {
-                    method: "POST",
-                    body: jobData
-                });
-                showToast("Job vacancy posted successfully!", "success");
-            }
-            if (data) {
-                resetJobForm();
-                loadRecruiterData();
-            }
-        } catch (err) {}
-    });
 
-    document.getElementById("btn-cancel-job").addEventListener("click", resetJobForm);
 
     // --- Drag and Drop File Input Listeners ---
     const dropZone = document.getElementById("drop-zone");

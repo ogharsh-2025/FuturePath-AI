@@ -24,7 +24,6 @@
         <nav class="nav-links">
             <a href="#home" id="nav-home" class="nav-link active">Home</a>
             <a href="#dashboard" id="nav-dashboard" class="nav-link auth-required hidden">Dashboard</a>
-            <a href="#recruiter" id="nav-recruiter" class="nav-link auth-required hidden">Recruiter Portal</a>
             <a href="#upload" id="nav-upload" class="nav-link auth-required hidden">Upload Resume</a>
         </nav>
         <div class="auth-buttons">
@@ -127,13 +126,6 @@
                             <input type="email" id="register-email" required placeholder="name@company.com">
                         </div>
                         <div class="form-group">
-                            <label for="register-role">I am a...</label>
-                            <select id="register-role" class="form-control">
-                                <option value="job_seeker">Job Seeker (Looking for jobs)</option>
-                                <option value="recruiter">Recruiter (Posting jobs)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="register-password">Password</label>
                             <input type="password" id="register-password" required placeholder="Min 6 characters">
                         </div>
@@ -180,54 +172,6 @@
                     </div>
                 </div>
 
-            </div>
-        </section>
-
-
-        <!-- 4. RECRUITER PORTAL VIEW -->
-        <section id="view-recruiter" class="spa-view">
-            <div class="recruiter-grid">
-                <!-- Left Panel: Post/Edit Form -->
-                <div class="glass-card form-panel">
-                    <h3 id="recruiter-form-title">Post New Job Opening</h3>
-                    <form id="form-job-post">
-                        <input type="hidden" id="job-id-field">
-                        <div class="form-group">
-                            <label for="job-title">Job Title</label>
-                            <input type="text" id="job-title" required placeholder="e.g. Senior Software Engineer">
-                        </div>
-                        <div class="form-group">
-                            <label for="job-company">Company</label>
-                            <input type="text" id="job-company" required placeholder="e.g. FuturePath Labs">
-                        </div>
-                        <div class="form-group">
-                            <label for="job-location">Location</label>
-                            <input type="text" id="job-location" required placeholder="e.g. New York, NY (Remote)">
-                        </div>
-                        <div class="form-group">
-                            <label for="job-salary">Salary Range</label>
-                            <input type="text" id="job-salary" placeholder="e.g. $130,000 - $160,000">
-                        </div>
-                        <div class="form-group">
-                            <label for="job-description">Job Description & Requirements</label>
-                            <textarea id="job-description" required rows="6" placeholder="Describe the job description, required skills, and candidate profile. The AI will extract requirements automatically..."></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" id="btn-submit-job" class="btn btn-primary">Post Opening</button>
-                            <button type="button" id="btn-cancel-job" class="btn btn-outline hidden">Cancel Edit</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Right Panel: Active Jobs List -->
-                <div class="jobs-list-panel">
-                    <div class="section-header">
-                        <h2>My Postings</h2>
-                    </div>
-                    <div id="recruiter-jobs-container" class="recruiter-jobs-list">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
             </div>
         </section>
 
