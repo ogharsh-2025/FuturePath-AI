@@ -736,6 +736,24 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.hash = "#upload";
     });
 
+    // Refresh dashboard data
+    const refreshBtn = document.getElementById("btn-dash-refresh-all");
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", async () => {
+            const icon = refreshBtn.querySelector("i");
+            if (icon) icon.classList.add("fa-spin");
+            
+            try {
+                await loadDashboard();
+                showToast("Dashboard data and job matches refreshed.", "success");
+            } catch (err) {
+                showToast("Error refreshing dashboard data.", "error");
+            } finally {
+                if (icon) icon.classList.remove("fa-spin");
+            }
+        });
+    }
+
     // Settings Theme Preference switch
     const themeCheckbox = document.getElementById("setting-theme-toggle");
     themeCheckbox.addEventListener("change", () => {
