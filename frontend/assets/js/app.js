@@ -679,12 +679,39 @@ function updateUserWidgetUI() {
     }
 }
 
+function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+
+    // Update settings checkbox if it exists on screen
+    const themeCheckbox = document.getElementById("setting-theme-toggle");
+    if (themeCheckbox) {
+        themeCheckbox.checked = (theme === "dark");
+    }
+
+    // Update navigation bar icon
+    const themeIcon = document.getElementById("theme-toggle-icon");
+    if (themeIcon) {
+        if (theme === "dark") {
+            themeIcon.className = "fa-solid fa-sun";
+            themeIcon.parentElement.setAttribute("title", "Switch to Light Theme");
+        } else {
+            themeIcon.className = "fa-solid fa-moon";
+            themeIcon.parentElement.setAttribute("title", "Switch to Dark Theme");
+        }
+    }
+}
+
 // ==========================================================================
 // EVENT ATTACHMENTS & INTERACTIVE CONTROLLERS
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
     
+    // Initialize theme from localStorage
+    const savedTheme = localStorage.getItem("theme") || "light";
+    applyTheme(savedTheme);
+
     router();
     window.addEventListener("hashchange", router);
 
@@ -712,11 +739,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // Settings Theme Preference switch
     const themeCheckbox = document.getElementById("setting-theme-toggle");
     themeCheckbox.addEventListener("change", () => {
-        const activateDark = themeCheckbox.checked;
-        const targetTheme = activateDark ? "dark" : "light";
-        document.documentElement.setAttribute("data-theme", targetTheme);
+        const targetTheme = themeCheckbox.checked ? "dark" : "light";
+        applyTheme(targetTheme);
         showToast(`Theme switched to ${targetTheme} mode.`, "success");
     });
+
+    // Header Theme Toggle button
+    const btnToggleTheme = document.getElementById("btn-toggle-theme");
+    if (btnToggleTheme) {
+        btnToggleTheme.addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+            const targetTheme = currentTheme === "dark" ? "light" : "dark";
+            applyTheme(targetTheme);
+            showToast(`Theme switched to ${targetTheme} mode.`, "success");
+        });
+    }
 
     // Settings Database Diagnostics checker
     document.getElementById("btn-check-db").addEventListener("click", async () => {
