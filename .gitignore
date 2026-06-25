@@ -13,7 +13,14 @@ ENV/
 env/
 .env
 
+# Databases & SQLite
+jobrec.db
+*.db-journal
+*.db-shm
+*.db-wal
+
 # User Uploads
+uploads/
 backend/uploads/*
 backend/uploads/user_*
 !backend/uploads/.gitkeep
